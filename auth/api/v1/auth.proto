@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/databonfire/bonfire/api/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.v1";
+
+service Auth {
+  rpc Register (RegisterRequest) returns (RegisterReply) {
+    option (google.api.http) = {
+      post: "/auth/register",
+      body: "*",
+    };
+  };
+  rpc Login (LoginRequest) returns (LoginReply) {
+    option (google.api.http) = {
+      post: "/auth/login",
+      body: "*",
+    };
+  };
+}
+
+message RegisterRequest {}
+message RegisterReply {}
+
+message LoginRequest {}
+message LoginReply {}
