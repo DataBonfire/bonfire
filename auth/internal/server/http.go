@@ -17,9 +17,10 @@ func NewHTTPServer(c *conf.Server, dc *conf.Data, auth *service.AuthService, log
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
-			//auth.AC(dc),
-			//auth.RemoteAC(dc),
 			resource.StorageMiddleware,
+			MakeAuthMiddleware(&Option{
+				Secret: c.Jwtsecret,
+			}),
 		),
 	}
 	if c.Http.Network != "" {

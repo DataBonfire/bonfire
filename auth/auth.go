@@ -1,10 +1,9 @@
 package auth
 
 import (
-	"context"
-
 	pb "github.com/databonfire/bonfire/auth/api/v1"
 	"github.com/databonfire/bonfire/auth/internal/conf"
+	"github.com/databonfire/bonfire/auth/internal/server"
 	"github.com/databonfire/bonfire/auth/user"
 	"github.com/databonfire/bonfire/resource"
 	"github.com/go-kratos/kratos/v2/log"
@@ -65,18 +64,9 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	}
 }
 
-var MakeAuthMiddleware = func(key string) middleware.Middleware {
-	return func(next middleware.Handler) middleware.Handler {
-		return (middleware.Handler)(func(ctx context.Context, req interface{}) (interface{}, error) {
-			// jwt validate
-			var uid uint
-			user, err := ctx.Value("storage").(map[string]resource.Repo)["users"].Find(ctx, uid)
-			if err != nil {
-				return nil, err
-			}
-			// add ca[*User]
-			ctx = context.WithValue(ctx, "author", user)
-			return next(ctx, req)
-		})
-	}
+func MakeAuthMiddleware(secret string, publicPaths []string) middleware.Middleware {
+	return server.MakeAuthMiddleware(&server.Option{
+		Secret:      secret,
+		PublicPaths: publicPaths,
+	})
 }

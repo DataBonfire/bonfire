@@ -18,6 +18,8 @@ func NewHTTPServer(c *conf.Server, dc *conf.Data, blog *service.BlogService, log
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
+			resource.StorageMiddleware,
+			auth.MakeAuthMiddleware(c.Jwtsecret, nil),
 		),
 	}
 	if c.Http.Network != "" {
@@ -42,16 +44,17 @@ func NewHTTPServer(c *conf.Server, dc *conf.Data, blog *service.BlogService, log
 			Resources: map[string]interface{}{
 				"users":         &biz.User{},
 				"organizations": &biz.Organization{},
+				"posts":         &biz.Post{},
 			},
 			DataConfig: rdc,
 			Logger:     logger,
 		})
-		resource.RegisterHTTPServer(srv, &resource.Option{
-			Resource:   "posts",
-			Model:      &biz.Post{},
-			DataConfig: rdc,
-			Logger:     logger,
-		})
+		//resource.RegisterHTTPServer(srv, &resource.Option{
+		//	Resource:   "posts",
+		//	Model:      &biz.Post{},
+		//	DataConfig: rdc,
+		//	Logger:     logger,
+		//})
 	}
 	return srv
 }

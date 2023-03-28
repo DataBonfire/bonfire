@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/go-kratos/kratos/v2/transport/http"
@@ -30,17 +31,22 @@ func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.BindQuery(&r); err != nil {
 			return err
 		}
-		data, total, err := svc.repo.List(ctx, &r)
+		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			data, total, err := svc.repo.List(ctx, req.(*ListRequest))
+			if err != nil {
+				return nil, err
+			}
+			return &ListResponse{
+				Data: data,
+				Pagination: &Pagination{
+					Total:   total,
+					PerPage: r.PerPage,
+					Paged:   r.Paged,
+				},
+			}, nil
+		})(ctx, r)
 		if err != nil {
 			return err
-		}
-		reply := &ListResponse{
-			Data: data,
-			Pagination: &Pagination{
-				Total:   total,
-				PerPage: r.PerPage,
-				Paged:   r.Paged,
-			},
 		}
 		return ctx.Result(200, reply)
 	}
@@ -56,7 +62,10 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.BindVars(&r); err != nil {
 			return err
 		}
-		reply, err := svc.repo.Find(ctx, r.ID)
+
+		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return svc.repo.Find(ctx, req.(uint))
+		})(ctx, &r.ID)
 		if err != nil {
 			return err
 		}
@@ -70,10 +79,14 @@ func createHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.Bind(record); err != nil {
 			return err
 		}
-		if err := svc.repo.Save(ctx, record); err != nil {
+
+		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return record, svc.repo.Save(ctx, req)
+		})(ctx, record)
+		if err != nil {
 			return err
 		}
-		return ctx.Result(200, record)
+		return ctx.Result(200, reply)
 	}
 }
 
@@ -83,20 +96,25 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.BindVars(&r); err != nil {
 			return err
 		}
-		record, err := svc.repo.Find(ctx, r.ID)
+
+		// TODO req should be record
+		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
+			record, err := svc.repo.Find(ctx, req.(uint))
+			if err != nil {
+				return nil, err
+			}
+			if err = ctx.Bind(record); err != nil {
+				return nil, err
+			}
+			if !ctx.Value("author").(AC).Allow("edit", svc.Option.Resource, record) {
+				return nil, ErrPermissionDenied
+			}
+			return record, svc.repo.Save(stdctx, record)
+		})(ctx, r.ID)
 		if err != nil {
 			return err
 		}
-		if !ctx.Value("author").(AC).Allow("edit", svc.Option.Resource, record) {
-			return ErrPermissionDenied
-		}
-		if err = ctx.Bind(record); err != nil {
-			return err
-		}
-		if err = svc.repo.Save(ctx, record); err != nil {
-			return err
-		}
-		return ctx.Result(200, record)
+		return ctx.Result(200, reply)
 	}
 }
 
@@ -106,9 +124,13 @@ func deleteHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.BindVars(&r); err != nil {
 			return err
 		}
-		if err := svc.repo.Delete(ctx, r.ID); err != nil {
+
+		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return nil, svc.repo.Delete(ctx, r.ID)
+		})(ctx, r.ID)
+		if err != nil {
 			return err
 		}
-		return ctx.Result(200, nil)
+		return ctx.Result(200, reply)
 	}
 }
