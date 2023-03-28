@@ -2,9 +2,8 @@ package data
 
 import (
 	"context"
-	"os/user"
 
-	"github.com/databonfire/bonfire/auth/internal/biz"
+	"github.com/databonfire/bonfire/auth/user"
 	"github.com/go-kratos/kratos/v2/log"
 )
 
@@ -13,13 +12,13 @@ type userRepo struct {
 	log  *log.Helper
 }
 
-func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
+func NewUserRepo(data *Data, logger log.Logger) user.UserRepo {
 	return &userRepo{
 		data: data,
 		log:  log.NewHelper(logger),
 	}
 }
 
-func (r *userRepo) Save(ctx context.Context, u *biz.User) (*user.User, error) {
+func (r *userRepo) Save(ctx context.Context, u *user.User) (*user.User, error) {
 	return u, nil
 }

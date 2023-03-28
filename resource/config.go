@@ -5,17 +5,17 @@ import (
 )
 
 type (
-	Config struct {
-		Database *Database
-		Redis    *Redis
+	DataConfig struct {
+		Database *DatabaseConfig
+		Redis    *RedisConfig
 	}
 
-	Database struct {
+	DatabaseConfig struct {
 		Driver string
 		Source string
 	}
 
-	Redis struct {
+	RedisConfig struct {
 		Network      string
 		Addr         string
 		ReadTimeout  *durationpb.Duration

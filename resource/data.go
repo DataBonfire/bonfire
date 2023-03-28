@@ -23,7 +23,7 @@ type repo struct {
 	modelType reflect.Type
 }
 
-func NewRepo(c *Config, model interface{}, logger log.Logger) (Repo, func(), error) {
+func NewRepo(c *DataConfig, model interface{}, logger log.Logger) (Repo, func(), error) {
 	var (
 		db  *gorm.DB
 		err error
@@ -85,7 +85,7 @@ func (r *repo) Find(ctx context.Context, id uint) (interface{}, error) {
 }
 
 func (r *repo) Save(ctx context.Context, record interface{}) error {
-	return r.db.Save(record).Error
+	return r.db.Model(r.model).Save(record).Error
 }
 
 func (r *repo) Delete(ctx context.Context, id uint) error {

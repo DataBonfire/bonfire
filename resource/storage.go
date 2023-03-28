@@ -20,7 +20,7 @@ func registerRepo(resource string, repo Repo) {
 
 var StorageMiddleware = func(next middleware.Handler) middleware.Handler {
 	return (middleware.Handler)(func(ctx context.Context, req interface{}) (interface{}, error) {
-		ctx = context.WithValue("storage", storage)
+		ctx = context.WithValue(ctx, "storage", storage)
 		return next(ctx, req)
 	})
 }

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package examples.singleton.api.blog.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/databonfire/bonfire/examples/singleton/api/blog/v1;v1";
+option java_multiple_files = true;
+option java_package = "examples.singleton.api.blog.v1";
+
+service Blog {
+	rpc CreatePost (CreatePostRequest) returns (CreatePostReply);
+	rpc UpdatePost (UpdatePostRequest) returns (UpdatePostReply);
+	rpc DeletePost (DeletePostRequest) returns (DeletePostReply);
+	rpc GetPost (GetPostRequest) returns (GetPostReply);
+	rpc ListPost (ListPostRequest) returns (ListPostReply) {
+    option (google.api.http) = {
+      get: "/v1/posts"
+    };
+  };
+}
+
+message CreatePostRequest {}
+message CreatePostReply {}
+
+message UpdatePostRequest {}
+message UpdatePostReply {}
+
+message DeletePostRequest {}
+message DeletePostReply {}
+
+message GetPostRequest {}
+message GetPostReply {}
+
+message ListPostRequest {}
+message ListPostReply {}

@@ -22,11 +22,11 @@ type User struct {
 	ManagerID      uint
 	Manager        *User
 
-	Permissions []*Permission `gorm:"ignore"`
+	Permissions []*Permission `gorm:"-"`
 }
 
 func (u *User) Whoami() uint {
-	return u.Id
+	return u.ID
 }
 
 func (u *User) Allow(action string, resource string, record interface{}) bool {

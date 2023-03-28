@@ -3,17 +3,16 @@ package resource
 import (
 	"reflect"
 
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
-func RegisterHTTPServer(conf *Config, logger log.Logger, s *http.Server, opt *Option) func() {
-	repo, cleanup, err := NewRepo(conf, opt.Model, logger)
+func RegisterHTTPServer(s *http.Server, opt *Option) func() {
+	repo, cleanup, err := NewRepo(opt.DataConfig, opt.Model, opt.Logger)
 	if err != nil {
 		panic(err)
 	}
 	registerRepo(opt.Resource, repo)
-	svc := NewService(opt, opt.Model, repo)
+	svc := NewService(opt, repo)
 
 	r := s.Route("/")
 	r.GET("/"+opt.Resource, listHTTPHandler(svc))
@@ -67,7 +66,7 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 
 func createHTTPHandler(svc *Service) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		record := reflect.New(svc.resourceType)
+		record := reflect.New(svc.resourceType.Elem()).Interface()
 		if err := ctx.Bind(record); err != nil {
 			return err
 		}
@@ -88,7 +87,9 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err != nil {
 			return err
 		}
-		ctx.Value("user")(*biz.User).HasPermission("edit", record)
+		if !ctx.Value("author").(AC).Allow("edit", svc.Option.Resource, record) {
+			return ErrPermissionDenied
+		}
 		if err = ctx.Bind(record); err != nil {
 			return err
 		}

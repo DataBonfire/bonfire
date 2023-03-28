@@ -1,5 +1,5 @@
 syntax = "proto3";
-package kratos.api;
+package auth.api;
 
 option go_package = "github.com/databonfire/bonfire/auth/internal/conf;conf";
 

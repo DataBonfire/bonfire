@@ -2,9 +2,9 @@ package server
 
 import (
 	pb "github.com/databonfire/bonfire/auth/api/v1"
-	"github.com/databonfire/bonfire/auth/internal/biz"
 	"github.com/databonfire/bonfire/auth/internal/conf"
 	"github.com/databonfire/bonfire/auth/internal/service"
+	"github.com/databonfire/bonfire/auth/user"
 	"github.com/databonfire/bonfire/resource"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -33,29 +33,35 @@ func NewHTTPServer(c *conf.Server, dc *conf.Data, auth *service.AuthService, log
 	}
 	srv := http.NewServer(opts...)
 	pb.RegisterAuthHTTPServer(srv, auth)
-	rc := &resource.Config{
-		&resource.Database{
+	rdc := &resource.DataConfig{
+		Database: &resource.DatabaseConfig{
 			Driver: dc.Database.Driver,
 			Source: dc.Database.Source,
 		},
-		nil,
 	}
-	auth.RegisterHTTPServer(rc, logger, srv)
-	resource.RegisterHTTPServer(rc, logger, srv, &resource.Option{
-		Resource: "organizations",
-		Model:    &biz.Organization{},
+	resource.RegisterHTTPServer(srv, &resource.Option{
+		Resource:   "organizations",
+		Model:      &user.Organization{},
+		DataConfig: rdc,
+		Logger:     logger,
 	})
-	resource.RegisterHTTPServer(rc, logger, srv, &resource.Option{
-		Resource: "users",
-		Model:    &biz.User{},
+	resource.RegisterHTTPServer(srv, &resource.Option{
+		Resource:   "users",
+		Model:      &user.User{},
+		DataConfig: rdc,
+		Logger:     logger,
 	})
-	resource.RegisterHTTPServer(rc, logger, srv, &resource.Option{
-		Resource: "roles",
-		Model:    &biz.Role{},
+	resource.RegisterHTTPServer(srv, &resource.Option{
+		Resource:   "roles",
+		Model:      &user.Role{},
+		DataConfig: rdc,
+		Logger:     logger,
 	})
-	resource.RegisterHTTPServer(rc, logger, srv, &resource.Option{
-		Resource: "permissions",
-		Model:    &biz.Permission{},
+	resource.RegisterHTTPServer(srv, &resource.Option{
+		Resource:   "permissions",
+		Model:      &user.Permission{},
+		DataConfig: rdc,
+		Logger:     logger,
 	})
 	return srv
 }
