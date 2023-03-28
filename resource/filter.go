@@ -59,4 +59,6 @@ type Constraint struct {
 	LE     interface{}   `json:"le,omitempty"`
 	LT     interface{}   `json:"lt,omitempty"`
 	Weight float32       `json:"weight,omitempty"`
+
+	Negate bool `json:"negate,omitempty"`
 }
