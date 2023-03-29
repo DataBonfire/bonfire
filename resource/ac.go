@@ -4,7 +4,7 @@ import "errors"
 
 // access control
 type AC interface {
-	WhoAmI() uint
+	Whoami() uint
 	Allow(action string, resource string, record interface{}) bool
 }
 

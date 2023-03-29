@@ -6,9 +6,9 @@ import (
 	"reflect"
 )
 
-func GormFilter(db *gorm.DB, filter Filter) (*gorm.DB, error) {
+func GormFilter(db *gorm.DB, filter *Filter) (*gorm.DB, error) {
 	chains := db.Where("")
-	for fieldName, fieldValue := range filter {
+	for fieldName, fieldValue := range *filter {
 		filterAssert[float64](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
 		filterAssert[string](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
 		filterAssert[bool](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))

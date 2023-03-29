@@ -56,12 +56,25 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 		data  = reflect.New(reflect.MakeSlice(reflect.SliceOf(r.modelType), 0, 0).Type())
 		errs  = make(chan error, 1)
 	)
+	db, err := GormFilter(r.db.WithContext(ctx), lr.Filter)
+	if err != nil {
+		return nil, 0, err
+	}
 	go func() {
-		tx := r.db.Find(data.Interface())
+		for _, v := range lr.Sorts {
+			db.Order(fmt.Sprintf("%s %s", v.By, v.Order))
+		}
+		if lr.Paged > 0 {
+			db.Offset(int(lr.Paged * lr.PerPage))
+		}
+		if lr.PerPage > 0 {
+			db.Limit(int(lr.PerPage))
+		}
+		tx := db.Find(data.Interface())
 		errs <- tx.Error
 	}()
 	go func() {
-		tx := r.db.Model(r.model).Count(&total)
+		tx := db.Model(r.model).Count(&total)
 		errs <- tx.Error
 	}()
 

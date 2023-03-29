@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/databonfire/bonfire/auth/internal/utils"
 	"regexp"
 	"strings"
 
@@ -73,16 +74,39 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 
 		_, _ = act, res
 		//var ac resource.AC
+		// jwt 
+		token := ""
+		authToken := htx.Request().Header.Get("Authorization")
+		scheme := "Bearer"
+		l := len(scheme)
+		if len(authToken) > l+1 && authToken[:l] == scheme {
+			token = authToken[l+1:]
+		} else {
+			token = authToken[:]
+		}
+		userSession, err := utils.ParseToken(token, m.secret)
+		if err != nil {
+			return nil, err
+		}
+		uid := userSession.UserId
+
+		// todo AC
+		// user -> roles
+		// roles -> permissions
+		// match
+		//var ac resource.AC
 		//if !ac.Allow(act, res, nil) {
 		//	return nil, ErrPermissionDenied
 		//}
 
-		// jwt validate
-		var uid uint
+		////var uid uint
 		user, err := ctx.Value("storage").(map[string]resource.Repo)["users"].Find(ctx, uid)
 		if err != nil {
 			return nil, err
 		}
+		//ac := user.AC()
+
+		// user
 		// add ca[*User]
 		ctx = context.WithValue(ctx, "author", user)
 		return next(ctx, req)
