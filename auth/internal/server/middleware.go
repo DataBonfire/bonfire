@@ -3,9 +3,10 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/databonfire/bonfire/auth/internal/utils"
 	"regexp"
 	"strings"
+
+	"github.com/databonfire/bonfire/auth/internal/utils"
 
 	"github.com/databonfire/bonfire/resource"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -17,8 +18,6 @@ var publicPaths = []string{
 	"/auth/register",
 	"/auth/login",
 }
-
-var resourceExtract = regexp.MustCompile(`^\/([^\d^\/]+)\/?([^\/]*)`)
 
 type Option struct {
 	Secret           string
@@ -39,51 +38,16 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 			return nil, errors.New("Unexcept err when get transport from server context")
 		}
 		htx := tx.(http.Transporter)
-		path := htx.Request().URL.Path
+		token, path, act, res := readHTTPTransporter(htx)
+
+		// Public Endpoints
 		for _, v := range append(m.publicPaths, publicPaths...) {
 			if strings.HasPrefix(path, v) {
 				return next(ctx, req)
 			}
 		}
 
-		var (
-			act   string
-			res   string
-			resID string
-		)
-		for _, v := range append(m.resourceExtracts, resourceExtract) {
-			if find := v.FindStringSubmatch(path); find != nil {
-				res, resID = find[1], find[2]
-				break
-			}
-		}
-		switch htx.Request().Method {
-		case "GET":
-			act = "show"
-			if resID == "" {
-				act = "browse"
-			}
-		case "PATCH", "POST":
-			act = "edit"
-			if resID == "" {
-				act = "create"
-			}
-		case "DELETE":
-			act = "delete"
-		}
-
-		_, _ = act, res
-		//var ac resource.AC
-		// jwt 
-		token := ""
-		authToken := htx.Request().Header.Get("Authorization")
-		scheme := "Bearer"
-		l := len(scheme)
-		if len(authToken) > l+1 && authToken[:l] == scheme {
-			token = authToken[l+1:]
-		} else {
-			token = authToken[:]
-		}
+		// Auth
 		userSession, err := utils.ParseToken(token, m.secret)
 		if err != nil {
 			return nil, err
@@ -94,21 +58,19 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 		// user -> roles
 		// roles -> permissions
 		// match
-		//var ac resource.AC
-		//if !ac.Allow(act, res, nil) {
-		//	return nil, ErrPermissionDenied
-		//}
 
-		////var uid uint
+		// Access control
+		var ac resource.AC
 		user, err := ctx.Value("storage").(map[string]resource.Repo)["users"].Find(ctx, uid)
 		if err != nil {
 			return nil, err
 		}
+		_ = user
 		//ac := user.AC()
-
-		// user
-		// add ca[*User]
-		ctx = context.WithValue(ctx, "author", user)
+		if ac != nil && !ac.Allow(act, res, nil) {
+			return nil, ErrPermissionDenied
+		}
+		ctx = context.WithValue(ctx, "author", ac)
 		return next(ctx, req)
 	})
 }

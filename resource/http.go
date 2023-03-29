@@ -54,19 +54,27 @@ func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.BindQuery(&lr); err != nil {
 			return err
 		}
-		if svc.Option.Parent != "" {
-			var r RecordRequest
-			if err := ctx.BindVars(&r); err != nil {
-				return err
-			}
-			if lr.Filter == nil {
-				lr.Filter = &Filter{}
-			}
-			(map[string]interface{})(*lr.Filter)[schema.NamingStrategy{}.ColumnName("", svc.Option.ParentField)] = r.PID
-		}
 
-		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			data, total, err := svc.repo.List(ctx, req.(*ListRequest))
+		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
+			// Parent access control
+			if svc.Option.Parent != "" {
+				var r RecordRequest
+				if err := ctx.BindVars(&r); err != nil {
+					return nil, err
+				}
+				if parent, err := stdctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(stdctx, r.PID); err != nil {
+					return nil, err
+				} else if !stdctx.Value("ac").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
+					return nil, ErrPermissionDenied
+				}
+				if lr.Filter == nil {
+					lr.Filter = &Filter{}
+				}
+				// GET /posts/1/comments?filters={star:{gt:4}}
+				(map[string]interface{})(*lr.Filter)[schema.NamingStrategy{}.ColumnName("", svc.Option.ParentField)] = r.PID // {{post_id: 1, star: {gt: 4}}
+			}
+
+			data, total, err := svc.repo.List(stdctx, &lr)
 			if err != nil {
 				return nil, err
 			}
@@ -78,7 +86,7 @@ func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 					Paged:   lr.Paged,
 				},
 			}, nil
-		})(ctx, lr)
+		})(ctx, &lr)
 		if err != nil {
 			return err
 		}
@@ -99,7 +107,24 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 		}
 
 		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return svc.repo.Find(ctx, req.(uint))
+			// Parent access control
+			if svc.Option.Parent != "" {
+				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
+					return nil, err
+				} else if !ctx.Value("ac").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
+					return nil, ErrPermissionDenied
+				}
+			}
+
+			record, err := svc.repo.Find(ctx, r.ID)
+			if err != nil {
+				return nil, err
+			}
+			// Orphan resource access control
+			if svc.Option.Parent == "" && !ctx.Value("ac").(AC).Allow(ActionShow, svc.Option.Resource, record) {
+				return nil, ErrPermissionDenied
+			}
+			return record, nil
 		})(ctx, &r.ID)
 		if err != nil {
 			return err
@@ -114,16 +139,22 @@ func createHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.Bind(record); err != nil {
 			return err
 		}
-		if svc.Option.Parent != "" {
-			var r RecordRequest
-			if err := ctx.BindVars(&r); err != nil {
-				return err
-			}
-			reflect.ValueOf(record).Elem().FieldByName(svc.Option.ParentField).Set(reflect.ValueOf(r.PID))
-		}
 
-		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return record, svc.repo.Save(ctx, req)
+		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
+			// Parent access control
+			if svc.Option.Parent != "" {
+				var r RecordRequest
+				if err := ctx.BindVars(&r); err != nil {
+					return nil, err
+				}
+				if parent, err := stdctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(stdctx, r.PID); err != nil {
+					return nil, err
+				} else if !stdctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
+					return nil, ErrPermissionDenied
+				}
+				reflect.ValueOf(record).Elem().FieldByName(svc.Option.ParentField).Set(reflect.ValueOf(r.PID))
+			}
+			return record, svc.repo.Save(stdctx, record)
 		})(ctx, record)
 		if err != nil {
 			return err
@@ -139,20 +170,30 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 			return err
 		}
 
-		// TODO req should be record
 		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
-			record, err := svc.repo.Find(ctx, req.(uint))
+			// Parent access control
+			if svc.Option.Parent != "" {
+				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
+					return nil, err
+				} else if !ctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
+					return nil, ErrPermissionDenied
+				}
+			}
+
+			record, err := svc.repo.Find(ctx, r.ID)
 			if err != nil {
 				return nil, err
 			}
+			// Orphan resource access control
+			if svc.Option.Parent == "" && !ctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Resource, record) {
+				return nil, ErrPermissionDenied
+			}
+
 			if err = ctx.Bind(record); err != nil {
 				return nil, err
 			}
-			if !ctx.Value("author").(AC).Allow("edit", svc.Option.Resource, record) {
-				return nil, ErrPermissionDenied
-			}
 			return record, svc.repo.Save(stdctx, record)
-		})(ctx, r.ID)
+		})(ctx, r)
 		if err != nil {
 			return err
 		}
@@ -168,6 +209,24 @@ func deleteHTTPHandler(svc *Service) func(ctx http.Context) error {
 		}
 
 		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			// Parent access control
+			if svc.Option.Parent != "" {
+				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
+					return nil, err
+				} else if !ctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
+					return nil, ErrPermissionDenied
+				}
+			}
+
+			record, err := svc.repo.Find(ctx, r.ID)
+			if err != nil {
+				return nil, err
+			}
+			// Orphan resource access control
+			if svc.Option.Parent == "" && !ctx.Value("ac").(AC).Allow(ActionDelete, svc.Option.Resource, record) {
+				return nil, ErrPermissionDenied
+			}
+
 			return nil, svc.repo.Delete(ctx, r.ID)
 		})(ctx, r.ID)
 		if err != nil {
