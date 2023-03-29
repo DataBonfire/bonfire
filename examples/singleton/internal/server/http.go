@@ -42,9 +42,11 @@ func NewHTTPServer(c *conf.Server, dc *conf.Data, blog *service.BlogService, log
 		}
 		auth.RegisterHTTPServer(srv, &auth.Option{
 			Resources: map[string]interface{}{
-				"users":         &biz.User{},
-				"organizations": &biz.Organization{},
-				"posts":         &biz.Post{},
+				"users":          &biz.User{},
+				"organizations":  &biz.Organization{},
+				"posts":          &biz.Post{},
+				"posts.comments": &biz.Comment{},
+				//"posts.comments.replies": &biz.Reply{},
 			},
 			DataConfig: rdc,
 			Logger:     logger,

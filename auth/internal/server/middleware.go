@@ -17,7 +17,7 @@ var publicPaths = []string{
 	"/auth/login",
 }
 
-var resourceExtract = regexp.MustCompile(`\/([^\d^\/]+)\/?(\d*)$`)
+var resourceExtract = regexp.MustCompile(`^\/([^\d^\/]+)\/?([^\/]*)`)
 
 type Option struct {
 	Secret           string
@@ -71,10 +71,11 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 			act = "delete"
 		}
 
-		var ac resource.AC
-		if !ac.Allow(act, res, nil) {
-			return nil, ErrPermissionDenied
-		}
+		_, _ = act, res
+		//var ac resource.AC
+		//if !ac.Allow(act, res, nil) {
+		//	return nil, ErrPermissionDenied
+		//}
 
 		// jwt validate
 		var uid uint
