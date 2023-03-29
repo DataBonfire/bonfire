@@ -8,26 +8,33 @@ import (
 
 func GormFilter(db *gorm.DB, filter Filter) (*gorm.DB, error) {
 	chains := db.Where("")
-	for fieldName, v := range filter {
-		switch rv := reflect.TypeOf(v); rv.Kind() {
-		case reflect.Float32, reflect.Float64, reflect.String, reflect.Bool:
-			chains.Where(fmt.Sprintf("%s = ?", fieldName), v)
-		case reflect.Slice, reflect.Array:
-			chains.Where(fmt.Sprintf("%s in ?", fieldName), v)
-		case reflect.Map:
-			constraint, ok := v.(*Constraint)
+	for fieldName, fieldValue := range filter {
+		filterAssert[float64](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
+		filterAssert[string](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
+		filterAssert[bool](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
+		filterAssert[[]interface{}](chains, fieldValue, fmt.Sprintf("%s in ?", fieldName))
+		if _, ok := fieldValue.(map[string]interface{}); ok {
+			constraint, ok := fieldValue.(*Constraint)
 			if !ok {
 				continue
 			}
-			if !constraint.Negate {
+			if constraint.Negate {
 				notDb := constraintFilter(db, constraint, fieldName)
 				chains.Not(notDb)
 			} else {
 				constraintFilter(chains, constraint, fieldName)
 			}
+			continue
 		}
+
 	}
 	return chains, nil
+}
+
+func filterAssert[T any](chains *gorm.DB, fieldValue interface{}, condition string) {
+	if _, ok := fieldValue.(T); ok {
+		chains.Where(condition, fieldValue)
+	}
 }
 
 func constraintFilter(chains *gorm.DB, constraint *Constraint, fieldName string) *gorm.DB {
