@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/databonfire/bonfire/examples/singleton/internal/conf"
+	"gorm.io/gorm"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
@@ -13,6 +14,7 @@ var ProviderSet = wire.NewSet(NewData)
 // Data .
 type Data struct {
 	// TODO wrapped database client
+	db *gorm.DB
 }
 
 // NewData .

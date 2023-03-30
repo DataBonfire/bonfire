@@ -11,6 +11,7 @@ import (
 )
 
 type Repo interface {
+	DB() *gorm.DB
 	List(context.Context, *ListRequest) ([]interface{}, int64, error)
 	Find(context.Context, uint) (interface{}, error)
 	Save(context.Context, interface{}) error
@@ -48,6 +49,10 @@ func NewRepo(c *DataConfig, model interface{}, logger log.Logger) (Repo, func(),
 		model:     model,
 		modelType: reflect.TypeOf(model),
 	}, cleanup, nil
+}
+
+func (r *repo) DB() *gorm.DB {
+	return r.db
 }
 
 func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64, error) {

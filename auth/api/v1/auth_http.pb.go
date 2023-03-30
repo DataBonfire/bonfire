@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-http v2.5.2
 // - protoc             v3.15.6
-// source: auth/api/v1/auth.proto
+// source: api/v1/auth.proto
 
 package v1
 
@@ -19,10 +19,12 @@ var _ = binding.EncodeURL
 
 const _ = http.SupportPackageIsVersion1
 
+const OperationAuthGetPermissions = "/api.v1.Auth/GetPermissions"
 const OperationAuthLogin = "/api.v1.Auth/Login"
 const OperationAuthRegister = "/api.v1.Auth/Register"
 
 type AuthHTTPServer interface {
+	GetPermissions(context.Context, *GetPermissionsRequest) (*GetPermissionsReply, error)
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	Register(context.Context, *RegisterRequest) (*RegisterReply, error)
 }
@@ -31,6 +33,7 @@ func RegisterAuthHTTPServer(s *http.Server, srv AuthHTTPServer) {
 	r := s.Route("/")
 	r.POST("/auth/register", _Auth_Register0_HTTP_Handler(srv))
 	r.POST("/auth/login", _Auth_Login0_HTTP_Handler(srv))
+	r.GET("/auth/permissions", _Auth_GetPermissions0_HTTP_Handler(srv))
 }
 
 func _Auth_Register0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
@@ -71,7 +74,27 @@ func _Auth_Login0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error 
 	}
 }
 
+func _Auth_GetPermissions0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetPermissionsRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAuthGetPermissions)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetPermissions(ctx, req.(*GetPermissionsRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetPermissionsReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AuthHTTPClient interface {
+	GetPermissions(ctx context.Context, req *GetPermissionsRequest, opts ...http.CallOption) (rsp *GetPermissionsReply, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginReply, err error)
 	Register(ctx context.Context, req *RegisterRequest, opts ...http.CallOption) (rsp *RegisterReply, err error)
 }
@@ -82,6 +105,19 @@ type AuthHTTPClientImpl struct {
 
 func NewAuthHTTPClient(client *http.Client) AuthHTTPClient {
 	return &AuthHTTPClientImpl{client}
+}
+
+func (c *AuthHTTPClientImpl) GetPermissions(ctx context.Context, in *GetPermissionsRequest, opts ...http.CallOption) (*GetPermissionsReply, error) {
+	var out GetPermissionsReply
+	pattern := "/auth/permissions"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAuthGetPermissions))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
 }
 
 func (c *AuthHTTPClientImpl) Login(ctx context.Context, in *LoginRequest, opts ...http.CallOption) (*LoginReply, error) {

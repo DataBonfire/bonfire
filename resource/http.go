@@ -64,7 +64,7 @@ func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 				}
 				if parent, err := stdctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(stdctx, r.PID); err != nil {
 					return nil, err
-				} else if !stdctx.Value("ac").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
+				} else if !stdctx.Value("author").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
 				}
 				if lr.Filter == nil {
@@ -111,7 +111,7 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 			if svc.Option.Parent != "" {
 				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
 					return nil, err
-				} else if !ctx.Value("ac").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
+				} else if !ctx.Value("author").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
 				}
 			}
@@ -121,7 +121,7 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 				return nil, err
 			}
 			// Orphan resource access control
-			if svc.Option.Parent == "" && !ctx.Value("ac").(AC).Allow(ActionShow, svc.Option.Resource, record) {
+			if svc.Option.Parent == "" && !ctx.Value("author").(AC).Allow(ActionShow, svc.Option.Resource, record) {
 				return nil, ErrPermissionDenied
 			}
 			return record, nil
@@ -139,6 +139,9 @@ func createHTTPHandler(svc *Service) func(ctx http.Context) error {
 		if err := ctx.Bind(record); err != nil {
 			return err
 		}
+		if err := Validate(record); err != nil {
+			return err
+		}
 
 		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
@@ -149,7 +152,7 @@ func createHTTPHandler(svc *Service) func(ctx http.Context) error {
 				}
 				if parent, err := stdctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(stdctx, r.PID); err != nil {
 					return nil, err
-				} else if !stdctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
+				} else if !stdctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
 				}
 				reflect.ValueOf(record).Elem().FieldByName(svc.Option.ParentField).Set(reflect.ValueOf(r.PID))
@@ -175,7 +178,7 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 			if svc.Option.Parent != "" {
 				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
 					return nil, err
-				} else if !ctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
+				} else if !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
 				}
 			}
@@ -185,11 +188,14 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 				return nil, err
 			}
 			// Orphan resource access control
-			if svc.Option.Parent == "" && !ctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Resource, record) {
+			if svc.Option.Parent == "" && !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Resource, record) {
 				return nil, ErrPermissionDenied
 			}
 
 			if err = ctx.Bind(record); err != nil {
+				return nil, err
+			}
+			if err = validate.Struct(record); err != nil {
 				return nil, err
 			}
 			return record, svc.repo.Save(stdctx, record)
@@ -213,7 +219,7 @@ func deleteHTTPHandler(svc *Service) func(ctx http.Context) error {
 			if svc.Option.Parent != "" {
 				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
 					return nil, err
-				} else if !ctx.Value("ac").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
+				} else if !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
 				}
 			}
@@ -223,7 +229,7 @@ func deleteHTTPHandler(svc *Service) func(ctx http.Context) error {
 				return nil, err
 			}
 			// Orphan resource access control
-			if svc.Option.Parent == "" && !ctx.Value("ac").(AC).Allow(ActionDelete, svc.Option.Resource, record) {
+			if svc.Option.Parent == "" && !ctx.Value("author").(AC).Allow(ActionDelete, svc.Option.Resource, record) {
 				return nil, ErrPermissionDenied
 			}
 

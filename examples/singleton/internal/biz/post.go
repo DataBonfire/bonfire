@@ -8,8 +8,8 @@ import (
 
 type Post struct {
 	gorm.Model
-	Title       string
-	Content     string
+	Title       string `validate:"required" json:"title"`
+	Content     string `validate:"required" json:"content"`
 	Status      int
 	PublishedAt time.Time
 	PublishedBy uint

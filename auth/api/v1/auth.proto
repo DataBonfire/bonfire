@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1;
 
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/databonfire/bonfire/api/v1;v1";
 option java_multiple_files = true;
@@ -21,10 +22,51 @@ service Auth {
       body: "*",
     };
   };
+  rpc GetPermissions (GetPermissionsRequest) returns (GetPermissionsReply) {
+    option (google.api.http) = {
+      get: "/auth/permissions",
+    };
+  }
 }
 
-message RegisterRequest {}
+message RegisterRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string password = 4;
+  string password_repeated = 5;
+  string role = 6;
+}
 message RegisterReply {}
 
-message LoginRequest {}
-message LoginReply {}
+message LoginRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string password = 4;
+}
+
+message LoginReply {
+  string token = 1;
+  string name = 2;
+  string avatar = 3;
+  repeated string roles = 4;
+  Organization organization = 5;
+}
+
+message Organization {
+  string name = 1;
+  string logo = 2;
+}
+
+message GetPermissionsRequest {}
+
+message GetPermissionsReply {
+  message Permission {
+    string action = 1;
+    string resource = 2;
+    // {"created_by": "me"}
+    google.protobuf.Value record = 3;
+  }
+  repeated Permission permissions = 1;
+}

@@ -30,6 +30,24 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /auth/permissions:
+        get:
+            tags:
+                - Auth
+            operationId: Auth_GetPermissions
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetPermissionsReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /auth/register:
         post:
             tags:
@@ -56,6 +74,22 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        GetPermissionsReply:
+            type: object
+            properties:
+                permissions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GetPermissionsReply_Permission'
+        GetPermissionsReply_Permission:
+            type: object
+            properties:
+                action:
+                    type: string
+                resource:
+                    type: string
+                record:
+                    $ref: '#/components/schemas/GoogleProtobufValue'
         GoogleProtobufAny:
             type: object
             properties:
@@ -64,12 +98,41 @@ components:
                     description: The type of the serialized message.
             additionalProperties: true
             description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+        GoogleProtobufValue:
+            description: Represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values.
         LoginReply:
             type: object
-            properties: {}
+            properties:
+                token:
+                    type: string
+                name:
+                    type: string
+                avatar:
+                    type: string
+                roles:
+                    type: array
+                    items:
+                        type: string
+                organization:
+                    $ref: '#/components/schemas/Organization'
         LoginRequest:
             type: object
-            properties: {}
+            properties:
+                name:
+                    type: string
+                email:
+                    type: string
+                phone:
+                    type: string
+                password:
+                    type: string
+        Organization:
+            type: object
+            properties:
+                name:
+                    type: string
+                logo:
+                    type: string
         RegisterReply:
             type: object
             properties: {}
@@ -85,6 +148,8 @@ components:
                 password:
                     type: string
                 passwordRepeated:
+                    type: string
+                role:
                     type: string
         Status:
             type: object

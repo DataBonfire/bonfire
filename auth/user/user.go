@@ -1,25 +1,23 @@
 package user
 
 import (
-	"context"
-
 	"github.com/databonfire/bonfire/resource"
 	"gorm.io/gorm"
 )
 
 type User struct {
 	gorm.Model
-	Name           string
-	Avatar         string
-	Email          string
-	Phone          string
-	Password       string
-	PasswordHashed string
+	Name           string `json:"name"`
+	Avatar         string `json:"avatar"`
+	Email          string `json:"email"`
+	Phone          string `json:"phone"`
+	Password       string `json:"password"`
+	PasswordHashed string `json:"-"`
 
-	OrganizationID uint
+	OrganizationID uint `json:"organization_id"`
 	Organization   *Organization
-	Roles          resource.StringSlice
-	ManagerID      uint
+	Roles          resource.StringSlice `json:"roles"`
+	ManagerID      uint                 `json:"manager_id"`
 	Manager        *User
 
 	Permissions []*Permission `gorm:"-"`
@@ -36,8 +34,4 @@ func (u *User) Allow(action string, resource string, record interface{}) bool {
 		}
 	}
 	return false
-}
-
-type UserRepo interface {
-	Save(context.Context, *User) (*User, error)
 }

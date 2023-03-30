@@ -1,13 +1,51 @@
 package biz
 
-import "github.com/databonfire/bonfire/auth/user"
+import (
+	"context"
+	"errors"
+	"os/user"
+
+	"gorm.io/gorm"
+)
 
 type AuthUsecase struct {
-	userRepo user.UserRepo
+	conf     conf.Biz
+	roleRepo roleRepo
+	userRepo UserRepo
 }
 
-func NewAuthUsecase(userRepo user.UserRepo) *AuthUsecase {
+func NewAuthUsecase(c *conf.Biz, roleRepo RoleRepo, userRepo UserRepo) *AuthUsecase {
 	return &AuthUsecase{
-		userRepo: userRepo,
+		c,
+		roleRepo,
+		userRepo,
 	}
 }
+
+func (au *AuthUsecase) Register(ctx context.Context, u *user.User) error {
+	// role is public register?
+	r, err := au.roleRepo.Find(ctx, u.Role)
+	if err != nil {
+		return err
+	}
+	if !r.IsRegisterPublic {
+		return Err
+	}
+
+	// name, email, phone is duplicate
+	_, err = au.userRepo.Find(ctx, u.Name, u.Email, u.Phone)
+	if err != gorm.ErrRecordNotFound {
+		return err
+	}
+	if err == nil {
+		return ErrAccountDuplicate
+	}
+	// encrypt password
+	// save
+	// notice
+}
+
+var (
+	ErrAccountDuplicate    = errors.New("account duplicate")
+	ErrRegisterIsNotPublic = errors.New("register is not public")
+)

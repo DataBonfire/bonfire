@@ -1,3 +1,10 @@
+service:
+  jwtsecret: "xxx"
+  public_register: 
+    - partner
+    - partner_agency
+    - customer
+    - customer_agency
 server:
   http:
     addr: 0.0.0.0:8000
