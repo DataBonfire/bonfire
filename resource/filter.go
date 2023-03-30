@@ -11,10 +11,9 @@ import (
 
 type Filter map[string]interface{}
 
-func (f *Filter) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+func (f *Filter) UnmarshalJSON(bytes []byte) error {
+	if len(bytes) == 0 {
+		return nil
 	}
 
 	var result map[string]interface{}
@@ -36,6 +35,14 @@ func (f *Filter) Scan(value interface{}) error {
 
 	*f = Filter(result)
 	return nil
+}
+
+func (f *Filter) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+	}
+	return f.UnmarshalJSON(bytes)
 }
 
 func (f Filter) Value() (driver.Value, error) {

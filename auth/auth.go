@@ -51,14 +51,15 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 		}))
 	}
 	for k, v := range resources {
-		if _, ok := opt.Resources[k]; !ok {
-			continue
-		}
+		//if _, ok := opt.Resources[k]; !ok {
+		//	continue
+		//}
 		if cleanup := resource.RegisterHTTPServer(srv, &resource.Option{
-			Resource:   k,
-			Model:      v,
-			DataConfig: opt.DataConfig,
-			Logger:     opt.Logger,
+			AuthPackage: true,
+			Resource:    k,
+			Model:       v,
+			DataConfig:  opt.DataConfig,
+			Logger:      opt.Logger,
 		}); cleanup != nil {
 			cleanups = append(cleanups, cleanup)
 		}

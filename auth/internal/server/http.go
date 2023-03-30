@@ -21,7 +21,6 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
-			resource.StorageMiddleware,
 			MakeAuthMiddleware(&Option{
 				Secret: bc.Jwtsecret,
 			}),

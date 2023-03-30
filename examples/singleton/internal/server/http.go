@@ -18,7 +18,6 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
-			resource.StorageMiddleware,
 			auth.MakeAuthMiddleware(bc.Jwtsecret, nil),
 		),
 	}

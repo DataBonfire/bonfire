@@ -41,8 +41,12 @@ func RegisterHTTPServer(s *http.Server, opt *Option) func() {
 		registeredData[opt.DataConfig] = data
 	}
 	registeredDataMtx.Unlock()
-	repo := NewRepo(data, opt.Model, opt.Logger)
-	registerRepo(opt.Resource, repo)
+	repo := NewRepo(data, opt.Resource, opt.Model, opt.Logger)
+	repoName := opt.Resource
+	if opt.AuthPackage {
+		repoName = "auth." + repoName
+	}
+	registerRepo(repoName, repo)
 	svc := NewService(opt, repo)
 
 	pathPrefix := "/"
@@ -63,7 +67,7 @@ func RegisterHTTPServer(s *http.Server, opt *Option) func() {
 func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var lr ListRequest
-		if err := ctx.BindQuery(&lr); err != nil {
+		if err := ctx.Bind(&lr); err != nil {
 			return err
 		}
 
@@ -74,16 +78,16 @@ func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 				if err := ctx.BindVars(&r); err != nil {
 					return nil, err
 				}
-				if parent, err := stdctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(stdctx, r.PID); err != nil {
+				if parent, err := GetRepo(svc.Option.Parent).Find(stdctx, r.PID); err != nil {
 					return nil, err
 				} else if !stdctx.Value("author").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
 				}
 				if lr.Filter == nil {
-					lr.Filter = &Filter{}
+					lr.Filter = Filter{}
 				}
 				// GET /posts/1/comments?filters={star:{gt:4}}
-				(map[string]interface{})(*lr.Filter)[schema.NamingStrategy{}.ColumnName("", svc.Option.ParentField)] = r.PID // {{post_id: 1, star: {gt: 4}}
+				(map[string]interface{})(lr.Filter)[schema.NamingStrategy{}.ColumnName("", svc.Option.ParentField)] = r.PID // {{post_id: 1, star: {gt: 4}}
 			}
 
 			data, total, err := svc.repo.List(stdctx, &lr)
@@ -121,7 +125,7 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
 			if svc.Option.Parent != "" {
-				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
+				if parent, err := GetRepo(svc.Option.Parent).Find(ctx, r.PID); err != nil {
 					return nil, err
 				} else if !ctx.Value("author").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
@@ -162,7 +166,7 @@ func createHTTPHandler(svc *Service) func(ctx http.Context) error {
 				if err := ctx.BindVars(&r); err != nil {
 					return nil, err
 				}
-				if parent, err := stdctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(stdctx, r.PID); err != nil {
+				if parent, err := GetRepo(svc.Option.Parent).Find(stdctx, r.PID); err != nil {
 					return nil, err
 				} else if !stdctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
@@ -188,7 +192,7 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
 			if svc.Option.Parent != "" {
-				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
+				if parent, err := GetRepo(svc.Option.Parent).Find(ctx, r.PID); err != nil {
 					return nil, err
 				} else if !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
@@ -229,7 +233,7 @@ func deleteHTTPHandler(svc *Service) func(ctx http.Context) error {
 		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
 			if svc.Option.Parent != "" {
-				if parent, err := ctx.Value("storage").(map[string]Repo)[svc.Option.Parent].Find(ctx, r.PID); err != nil {
+				if parent, err := GetRepo(svc.Option.Parent).Find(ctx, r.PID); err != nil {
 					return nil, err
 				} else if !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied

@@ -37,7 +37,7 @@ func RegisterGRPCServer(s *grpc.Server, opt *Option) func() {
 		registeredData[opt.DataConfig] = data
 	}
 	registeredDataMtx.Unlock()
-	repo := NewRepo(data, opt.Model, opt.Logger)
+	repo := NewRepo(data, opt.Resource, opt.Model, opt.Logger)
 	registerRepo(opt.Resource, repo)
 	svc := NewService(opt, repo)
 

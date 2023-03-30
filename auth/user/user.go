@@ -33,12 +33,20 @@ func (u *User) Allow(action string, _resource string, record interface{}) bool {
 	return true
 	for _, p := range u.Permissions {
 		if p.Resource == _resource && p.Action == action {
-			return p.Record == nil || p.Record.Match(record, &resource.UserRelation{
-				UserId:         u.ID,
-				OrganizationID: u.OrganizationID,
-				Subordinates:   u.Subordinates,
-			})
+			return true
+			//return p.Record == nil || p.Record.Match(record, &resource.UserRelation{
+			//	UserId:         u.ID,
+			//	OrganizationID: u.OrganizationID,
+			//	Subordinates:   u.Subordinates,
+			//})
 		}
 	}
 	return false
+}
+
+func (u *User) GetFilters(action string, res string) []resource.Filter {
+	return []resource.Filter{
+		{"created_by": 1},
+		{"created_by": []int64{2, 3}, "title": map[string]string{"like": "xxx"}},
+	}
 }

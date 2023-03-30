@@ -3,9 +3,10 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/databonfire/bonfire/auth/user"
 	"regexp"
 	"strings"
+
+	"github.com/databonfire/bonfire/auth/user"
 
 	"github.com/databonfire/bonfire/auth/internal/utils"
 
@@ -70,7 +71,7 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 
 func getAC(ctx context.Context, uid uint) (resource.AC, error) {
 	// 获取 user 基本信息
-	userInterface, err := ctx.Value("storage").(map[string]resource.Repo)["users"].Find(ctx, uid)
+	userInterface, err := resource.GetRepo("auth.users").Find(ctx, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -81,21 +82,21 @@ func getAC(ctx context.Context, uid uint) (resource.AC, error) {
 
 	// 根据用户基本信息获取 角色和权限数据
 	var roles []*user.Role
-	err = ctx.Value("storage").(map[string]resource.Repo)["roles"].DB().Preload("Permissions").
-		Where("name in ?", ([]string)(userInfo.Roles)).Find(roles).Error
+	err = resource.GetRepo("auth.roles").DB().Preload("Permissions").
+		Where("name in ?", ([]string)(userInfo.Roles)).Find(&roles).Error
 	if err != nil {
 		return nil, err
 	}
 
-	permissions := make([]*user.Permission, 0)
-	for _, v := range roles {
-		permissions = append(permissions, v.Permissions...)
-	}
-	userInfo.Permissions = permissions
+	//permissions := make([]*user.Permission, 0)
+	//for _, v := range roles {
+	//	//permissions = append(permissions, v.Permissions...)
+	//}
+	//userInfo.Permissions = permissions
 
 	// 根据用户基本信息获取 下属id
-	usersInterface, _, err := ctx.Value("storage").(map[string]resource.Repo)["users"].List(ctx, &resource.ListRequest{
-		Filter:  &resource.Filter{"manager_id": userInfo.ID},
+	usersInterface, _, err := resource.GetRepo("auth.users").List(ctx, &resource.ListRequest{
+		Filter:  resource.Filter{"manager_id": userInfo.ID},
 		PerPage: 100,
 	})
 	subordinates := make([]uint, 0)

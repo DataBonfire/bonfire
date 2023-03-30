@@ -50,17 +50,19 @@ type Repo interface {
 
 type repo struct {
 	data      *Data
+	resource  string
 	model     interface{}
 	modelType reflect.Type
 	log       *log.Helper
 }
 
-func NewRepo(data *Data, model interface{}, logger log.Logger) Repo {
+func NewRepo(data *Data, resource string, model interface{}, logger log.Logger) Repo {
 	if err := data.db.AutoMigrate(model); err != nil {
 		panic(err)
 	}
 	return &repo{
 		data:      data,
+		resource:  resource,
 		model:     model,
 		modelType: reflect.TypeOf(model),
 		log:       log.NewHelper(logger),
@@ -75,35 +77,50 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 	var (
 		total int64
 		data  = reflect.New(reflect.MakeSlice(reflect.SliceOf(r.modelType), 0, 0).Type())
-		errs  = make(chan error, 1)
+		//errs  = make(chan error, 1)
 	)
-	db, err := GormFilter(r.data.db.WithContext(ctx), lr.Filter)
+	rootDB := r.data.db.WithContext(ctx)
+	db, err := GormFilter(rootDB, lr.Filter)
 	if err != nil {
 		return nil, 0, err
 	}
-	go func() {
-		for _, v := range lr.Sorts {
-			db.Order(fmt.Sprintf("%s %s", v.By, v.Order))
-		}
-		if lr.Paged > 0 {
-			db.Offset(int(lr.Paged * lr.PerPage))
-		}
-		if lr.PerPage > 0 {
-			db.Limit(int(lr.PerPage))
-		}
-		tx := db.Find(data.Interface())
-		errs <- tx.Error
-	}()
-	go func() {
-		tx := db.Model(r.model).Count(&total)
-		errs <- tx.Error
-	}()
-
-	for i := 0; i < 2; i++ {
-		if err := <-errs; err != nil {
-			return nil, 0, err
+	if ac := ctx.Value("author"); ac != nil {
+		if filters := ac.(AC).GetFilters(ActionBrowse, r.resource); filters != nil {
+			acDB, err := GormFilter(rootDB, filters...)
+			if err != nil {
+				return nil, 0, err
+			}
+			db.Where(acDB)
 		}
 	}
+	if err = db.Debug().Model(r.model).Count(&total).Offset(int(lr.Paged * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
+		return nil, 0, err
+	}
+
+	//db := r.data.db.Debug()
+	//go func() {
+	//	for _, v := range lr.Sorts {
+	//		db.Order(fmt.Sprintf("%s %s", v.By, v.Order))
+	//	}
+	//	if lr.Paged > 0 {
+	//		db.Offset(int(lr.Paged * lr.PerPage))
+	//	}
+	//	if lr.PerPage > 0 {
+	//		db.Limit(int(lr.PerPage))
+	//	}
+	//	tx := db.Find(data.Interface())
+	//	errs <- tx.Error
+	//}()
+	//go func() {
+	//	tx := db.Model(r.model).Count(&total)
+	//	errs <- tx.Error
+	//}()
+
+	//for i := 0; i < 2; i++ {
+	//	if err := <-errs; err != nil {
+	//		return nil, 0, err
+	//	}
+	//}
 
 	var list []interface{}
 	for i := 0; i < data.Elem().Len(); i++ {
@@ -113,9 +130,9 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 }
 
 func (r *repo) Find(ctx context.Context, id uint) (interface{}, error) {
-	dest := reflect.New(r.modelType).Interface()
-	tx := r.data.db.First(dest, id)
-	return dest, tx.Error
+	dest := reflect.New(r.modelType)
+	tx := r.data.db.First(dest.Interface(), id)
+	return dest.Elem().Interface(), tx.Error
 }
 
 func (r *repo) Save(ctx context.Context, record interface{}) error {

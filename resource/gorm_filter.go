@@ -2,33 +2,36 @@ package resource
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"reflect"
+
+	"gorm.io/gorm"
 )
 
-func GormFilter(db *gorm.DB, filter *Filter) (*gorm.DB, error) {
-	chains := db.Where("")
-	for fieldName, fieldValue := range *filter {
-		filterAssert[float64](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
-		filterAssert[string](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
-		filterAssert[bool](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
-		filterAssert[[]interface{}](chains, fieldValue, fmt.Sprintf("%s in ?", fieldName))
-		if _, ok := fieldValue.(map[string]interface{}); ok {
-			constraint, ok := fieldValue.(*Constraint)
-			if !ok {
+func GormFilter(db *gorm.DB, filters ...Filter) (*gorm.DB, error) {
+	if filters == nil {
+		return db, nil
+	}
+	groupDB := db.Where("")
+	for _, filter := range filters {
+		chains := db.Where("")
+		for fieldName, fieldValue := range filter {
+			filterAssert[float64](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
+			filterAssert[string](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
+			filterAssert[bool](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
+			filterAssert[[]interface{}](chains, fieldValue, fmt.Sprintf("%s in ?", fieldName))
+			if constraint, ok := fieldValue.(*Constraint); ok {
+				if constraint.Negate {
+					notDb := constraintFilter(db, constraint, fieldName)
+					chains.Not(notDb)
+				} else {
+					constraintFilter(chains, constraint, fieldName)
+				}
 				continue
 			}
-			if constraint.Negate {
-				notDb := constraintFilter(db, constraint, fieldName)
-				chains.Not(notDb)
-			} else {
-				constraintFilter(chains, constraint, fieldName)
-			}
-			continue
 		}
-
+		groupDB.Or(chains)
 	}
-	return chains, nil
+	return groupDB, nil
 }
 
 func filterAssert[T any](chains *gorm.DB, fieldValue interface{}, condition string) {
@@ -68,6 +71,9 @@ func constraintFilter(chains *gorm.DB, constraint *Constraint, fieldName string)
 }
 
 func filterCondition(chains *gorm.DB, value interface{}, filedName string, conditionFormat string) {
+	if value == nil {
+		return
+	}
 	switch rv := reflect.TypeOf(value); rv.Kind() {
 	case reflect.Float32, reflect.Float64:
 		if value.(float64) <= 0 {

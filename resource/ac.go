@@ -6,6 +6,7 @@ import "errors"
 type AC interface {
 	Whoami() uint
 	Allow(action string, resource string, record interface{}) bool
+	GetFilters(action string, resource string) []Filter
 }
 
 var (

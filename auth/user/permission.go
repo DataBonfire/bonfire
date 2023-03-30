@@ -21,6 +21,6 @@ type Permission struct {
 // campaigns -> list -> show edit btn?
 // hasPermission(action, resource)
 
-func m()  {
-	
+func m() {
+
 }

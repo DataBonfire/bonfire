@@ -3,7 +3,7 @@ package resource
 type (
 	ListRequest struct {
 		FilterJsonlized string  `json:"f"`
-		Filter          *Filter `json:"filter"`
+		Filter          Filter  `json:"filter"`
 		PerPage         int64   `json:"per_page"`
 		Paged           int64   `json:"paged"`
 		Sorts           []*Sort `json:"sorts"`
