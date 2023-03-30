@@ -11,7 +11,7 @@ type User struct {
 	Avatar         string `json:"avatar"`
 	Email          string `json:"email"`
 	Phone          string `json:"phone"`
-	Password       string `json:"password"`
+	Password       string `json:"password,omitempty" gorm:"-"`
 	PasswordHashed string `json:"-"`
 
 	OrganizationID uint `json:"organization_id"`
