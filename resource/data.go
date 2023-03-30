@@ -4,14 +4,20 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
+var (
+	registeredData    = map[*DataConfig]*Data{}
+	registeredDataMtx sync.Mutex
+)
+
 type Data struct {
-	db string
+	db *gorm.DB
 }
 
 func NewData(c *DataConfig, logger log.Logger) (*Data, func(), error) {
@@ -62,7 +68,7 @@ func NewRepo(data *Data, model interface{}, logger log.Logger) Repo {
 }
 
 func (r *repo) DB() *gorm.DB {
-	return r.db
+	return r.data.db
 }
 
 func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64, error) {
@@ -71,7 +77,7 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 		data  = reflect.New(reflect.MakeSlice(reflect.SliceOf(r.modelType), 0, 0).Type())
 		errs  = make(chan error, 1)
 	)
-	db, err := GormFilter(r.db.WithContext(ctx), lr.Filter)
+	db, err := GormFilter(r.data.db.WithContext(ctx), lr.Filter)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -108,14 +114,14 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 
 func (r *repo) Find(ctx context.Context, id uint) (interface{}, error) {
 	dest := reflect.New(r.modelType).Interface()
-	tx := r.db.First(dest, id)
+	tx := r.data.db.First(dest, id)
 	return dest, tx.Error
 }
 
 func (r *repo) Save(ctx context.Context, record interface{}) error {
-	return r.db.Model(r.model).Save(record).Error
+	return r.data.db.Model(r.model).Save(record).Error
 }
 
 func (r *repo) Delete(ctx context.Context, id uint) error {
-	return r.db.Delete(r.model, id).Error
+	return r.data.db.Delete(r.model, id).Error
 }

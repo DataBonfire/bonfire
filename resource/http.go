@@ -5,15 +5,9 @@ import (
 	"errors"
 	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"gorm.io/gorm/schema"
-)
-
-var (
-	registeredData    = map[*DataConfig]*Data{}
-	registeredDataMtx sync.Mutex
 )
 
 func RegisterHTTPServer(s *http.Server, opt *Option) func() {
@@ -33,20 +27,20 @@ func RegisterHTTPServer(s *http.Server, opt *Option) func() {
 		}
 	}
 
-	registeredData.Lock()
+	registeredDataMtx.Lock()
 	var (
 		data    *Data
 		cleanup func()
 	)
 	if data = registeredData[opt.DataConfig]; data == nil {
 		var err error
-		data, cleanup, err = NewData(opt.DataConfig)
+		data, cleanup, err = NewData(opt.DataConfig, opt.Logger)
 		if err != nil {
 			panic(err)
 		}
 		registeredData[opt.DataConfig] = data
 	}
-	registeredData.Unlock()
+	registeredDataMtx.Unlock()
 	repo := NewRepo(data, opt.Model, opt.Logger)
 	registerRepo(opt.Resource, repo)
 	svc := NewService(opt, repo)

@@ -2,12 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	pb "github.com/databonfire/bonfire/auth/api/v1"
 	"github.com/databonfire/bonfire/auth/internal/biz"
-	"github.com/databonfire/bonfire/auth/user"
-	"github.com/databonfire/bonfire/resource"
 )
 
 type AuthService struct {
@@ -23,41 +20,26 @@ func NewAuthService(au *biz.AuthUsecase) *AuthService {
 }
 
 func (s *AuthService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterReply, error) {
-	stor := ctx.Value("storage").(map[string]resource.Repo)
-	role := &user.Role{Name: req.Role}
-	if tx := stor["roles"].DB().First(&role); tx.Error != nil {
-		return nil, tx.Error
-	}
-	if !role.IsRegisterPublic {
-		return nil, ErrRegisterIsNotPublic
-	}
-	u := &user.User{
-		Name:           req.Name,
-		Email:          req.Email,
-		Phone:          req.Phone,
-		Password:       req.Password,
-		PasswordHashed: hashPassword(req.Password),
-		Roles:          []string{req.Role},
-	}
-	if err := stor["users"].Save(ctx, u); err != nil {
-		return nil, err
-	}
-	return &pb.RegisterReply{}, nil
+
+	return &pb.RegisterReply{}, s.authUsecase.Register(ctx, req)
 }
 func (s *AuthService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginReply, error) {
 
-	userInfo, tokenStr, err := s.authUsecase.Login(ctx, req.Email, req.Phone, req.Password)
+	userInfo, tokenStr, err := s.authUsecase.Login(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	return &pb.LoginReply{
+	reply := &pb.LoginReply{
 		Token:  tokenStr,
 		Name:   userInfo.Name,
 		Avatar: userInfo.Avatar,
-	}, nil
+		Roles:  userInfo.Roles,
+	}
+	if userInfo.Organization != nil {
+		reply.Organization = &pb.Organization{
+			Name: userInfo.Organization.Name,
+			Logo: userInfo.Organization.Logo,
+		}
+	}
+	return reply, nil
 }
-
-var (
-	ErrRegisterIsNotPublic = errors.New("register is not public")
-)

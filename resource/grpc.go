@@ -22,10 +22,22 @@ func RegisterGRPCServer(s *grpc.Server, opt *Option) func() {
 			panic(ErrInvalidParentID)
 		}
 	}
-	repo, cleanup, err := NewRepo(opt.DataConfig, opt.Model, opt.Logger)
-	if err != nil {
-		panic(err)
+
+	registeredDataMtx.Lock()
+	var (
+		data    *Data
+		cleanup func()
+	)
+	if data = registeredData[opt.DataConfig]; data == nil {
+		var err error
+		data, cleanup, err = NewData(opt.DataConfig, opt.Logger)
+		if err != nil {
+			panic(err)
+		}
+		registeredData[opt.DataConfig] = data
 	}
+	registeredDataMtx.Unlock()
+	repo := NewRepo(data, opt.Model, opt.Logger)
 	registerRepo(opt.Resource, repo)
 	svc := NewService(opt, repo)
 

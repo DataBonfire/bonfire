@@ -11,14 +11,14 @@ type User struct {
 	Avatar         string `json:"avatar"`
 	Email          string `json:"email"`
 	Phone          string `json:"phone"`
-	Password       string `json:"password"`
+	Password       string `json:"password,omitempty" gorm:"-"`
 	PasswordHashed string `json:"-"`
 
-	OrganizationID uint `json:"organization_id"`
-	Organization   *Organization
+	OrganizationID uint                 `json:"organization_id" gorm:"index"`
+	Organization   *Organization        `json:"organization,omitempty" gorm:"-"`
 	Roles          resource.StringSlice `json:"roles"`
-	ManagerID      uint                 `json:"manager_id"`
-	Manager        *User
+	ManagerID      uint                 `json:"manager_id" gorm:"index"`
+	Manager        *User                `gorm:"-"`
 
 	Permissions  []*Permission `gorm:"-"`
 	Subordinates []uint        `gorm:"-"`
