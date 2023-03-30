@@ -48,8 +48,10 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 				"posts.comments": &biz.Comment{},
 				//"posts.comments.replies": &biz.Reply{},
 			},
-			DataConfig: rdc,
-			Logger:     logger,
+			DataConfig:   rdc,
+			JWTSecret:    bc.Jwtsecret,
+			PasswordSalt: bc.PasswordSalt,
+			Logger:       logger,
 		})
 		//resource.RegisterHTTPServer(srv, &resource.Option{
 		//	Resource:   "posts",

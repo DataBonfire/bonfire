@@ -10,21 +10,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type Repo interface {
-	DB() *gorm.DB
-	List(context.Context, *ListRequest) ([]interface{}, int64, error)
-	Find(context.Context, uint) (interface{}, error)
-	Save(context.Context, interface{}) error
-	Delete(context.Context, uint) error
+type Data struct {
+	db string
 }
 
-type repo struct {
-	db        *gorm.DB
-	model     interface{}
-	modelType reflect.Type
-}
-
-func NewRepo(c *DataConfig, model interface{}, logger log.Logger) (Repo, func(), error) {
+func NewData(c *DataConfig, logger log.Logger) (*Data, func(), error) {
 	var (
 		db  *gorm.DB
 		err error
@@ -38,17 +28,37 @@ func NewRepo(c *DataConfig, model interface{}, logger log.Logger) (Repo, func(),
 	if err != nil {
 		return nil, nil, err
 	}
-	if err = db.AutoMigrate(model); err != nil {
-		return nil, nil, err
-	}
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
+	return &Data{db}, cleanup, nil
+}
+
+type Repo interface {
+	DB() *gorm.DB
+	List(context.Context, *ListRequest) ([]interface{}, int64, error)
+	Find(context.Context, uint) (interface{}, error)
+	Save(context.Context, interface{}) error
+	Delete(context.Context, uint) error
+}
+
+type repo struct {
+	data      *Data
+	model     interface{}
+	modelType reflect.Type
+	log       *log.Helper
+}
+
+func NewRepo(data *Data, model interface{}, logger log.Logger) Repo {
+	if err := data.db.AutoMigrate(model); err != nil {
+		panic(err)
+	}
 	return &repo{
-		db:        db.Debug(),
+		data:      data,
 		model:     model,
 		modelType: reflect.TypeOf(model),
-	}, cleanup, nil
+		log:       log.NewHelper(logger),
+	}
 }
 
 func (r *repo) DB() *gorm.DB {

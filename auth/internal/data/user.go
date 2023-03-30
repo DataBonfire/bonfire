@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+
 	"github.com/databonfire/bonfire/auth/internal/biz"
 	"github.com/databonfire/bonfire/resource"
 
@@ -25,13 +26,11 @@ func (r *userRepo) Save(ctx context.Context, u *user.User) error {
 }
 
 func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
-
 	return &userRepo{
 		data: data,
 		log:  log.NewHelper(logger),
 	}
 }
-
 
 func (r *userRepo) ACUser(ctx context.Context, id uint) (resource.AC, error) {
 	var userInfo user.User

@@ -16,14 +16,14 @@ import (
 
 // Injectors from wire.go:
 
-func wireService(bc *conf.Biz, dc *conf.Data, logger log.Logger) (*service.AuthService, func(), error) {
+func wireService(confBiz *conf.Biz, confData *conf.Data, logger log.Logger) (*service.AuthService, func(), error) {
 	dataData, cleanup, err := data.NewData(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}
 	roleRepo := data.NewRoleRepo(dataData, logger)
 	userRepo := data.NewUserRepo(dataData, logger)
-	authUsecase := biz.NewAuthUsecase(bc, roleRepo, userRepo)
+	authUsecase := biz.NewAuthUsecase(confBiz, roleRepo, userRepo)
 	authService := service.NewAuthService(authUsecase)
 	return authService, func() {
 		cleanup()

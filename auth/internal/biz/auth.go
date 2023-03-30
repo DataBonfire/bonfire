@@ -3,8 +3,9 @@ package biz
 import (
 	"context"
 	"errors"
+
 	"github.com/databonfire/bonfire/auth/internal/utils"
-	"os/user"
+	"github.com/databonfire/bonfire/auth/user"
 
 	"github.com/databonfire/bonfire/auth/internal/conf"
 	"gorm.io/gorm"
@@ -26,12 +27,12 @@ func NewAuthUsecase(c *conf.Biz, roleRepo RoleRepo, userRepo UserRepo) *AuthUsec
 
 func (au *AuthUsecase) Register(ctx context.Context, u *user.User) error {
 	// role is public register?
-	r, err := au.roleRepo.Find(ctx, u.Role)
+	r, err := au.roleRepo.Find(ctx, u.Roles[0])
 	if err != nil {
 		return err
 	}
 	if !r.IsRegisterPublic {
-		return Err
+		return ErrRegisterIsNotPublic
 	}
 
 	// name, email, phone is duplicate
@@ -45,11 +46,11 @@ func (au *AuthUsecase) Register(ctx context.Context, u *user.User) error {
 	// encrypt password
 	// save
 	// notice
+	return nil
 }
 
-func (au *AuthUsecase) Login(ctx context.Context, email, phone, password string) (*user.User, string, error) {
-
-	userInfo, err := au.userRepo.Find(ctx, 0, email, phone)
+func (au *AuthUsecase) Login(ctx context.Context, name, email, phone, password string) (*user.User, string, error) {
+	userInfo, err := au.userRepo.Find(ctx, name, email, phone)
 	if err != nil {
 		return nil, "", err
 	}
@@ -66,7 +67,6 @@ func (au *AuthUsecase) Login(ctx context.Context, email, phone, password string)
 
 	return userInfo, tokenStr, nil
 }
-
 
 var (
 	ErrAccountDuplicate    = errors.New("account duplicate")

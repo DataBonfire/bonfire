@@ -12,9 +12,11 @@ import (
 )
 
 type Option struct {
-	Resources  map[string]interface{}
-	DataConfig *resource.DataConfig
-	Logger     log.Logger
+	Resources    map[string]interface{}
+	DataConfig   *resource.DataConfig
+	JWTSecret    string
+	PasswordSalt string
+	Logger       log.Logger
 }
 
 var resources = map[string]interface{}{
@@ -25,7 +27,10 @@ var resources = map[string]interface{}{
 }
 
 func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
-	authSvc, cleanup, err := wireService(&conf.Biz{}, &conf.Data{
+	authSvc, cleanup, err := wireService(&conf.Biz{
+		Jwtsecret:    opt.JWTSecret,
+		PasswordSalt: opt.PasswordSalt,
+	}, &conf.Data{
 		Database: &conf.Data_Database{
 			Driver: opt.DataConfig.Database.Driver,
 			Source: opt.DataConfig.Database.Source,
@@ -49,12 +54,14 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 		if _, ok := opt.Resources[k]; !ok {
 			continue
 		}
-		cleanups = append(cleanups, resource.RegisterHTTPServer(srv, &resource.Option{
+		if cleanup := resource.RegisterHTTPServer(srv, &resource.Option{
 			Resource:   k,
 			Model:      v,
 			DataConfig: opt.DataConfig,
 			Logger:     opt.Logger,
-		}))
+		}); cleanup != nil {
+			cleanups = append(cleanups, cleanup)
+		}
 	}
 
 	return func() {

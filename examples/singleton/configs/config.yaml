@@ -1,3 +1,6 @@
+biz:
+  jwtsecret: bonfire
+  password_salt: bonfire
 server:
   http:
     addr: 0.0.0.0:8000

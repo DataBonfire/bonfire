@@ -1,10 +1,6 @@
-service:
-  jwtsecret: "xxx"
-  public_register: 
-    - partner
-    - partner_agency
-    - customer
-    - customer_agency
+biz:
+  jwtsecret: bonfire
+  password_salt: bonfire
 server:
   http:
     addr: 0.0.0.0:8000
