@@ -17,13 +17,13 @@ import (
 )
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, dc *conf.Data, auth *service.AuthService, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.AuthService, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
 			resource.StorageMiddleware,
 			MakeAuthMiddleware(&Option{
-				Secret: c.Jwtsecret,
+				Secret: bc.Jwtsecret,
 			}),
 		),
 	}

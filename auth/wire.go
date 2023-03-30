@@ -12,6 +12,6 @@ import (
 	"github.com/google/wire"
 )
 
-func wireService(*conf.Data, log.Logger) (*service.AuthService, func(), error) {
+func wireService(*conf.Biz, *conf.Data, log.Logger) (*service.AuthService, func(), error) {
 	panic(wire.Build(data.ProviderSet, biz.ProviderSet, service.NewAuthService))
 }

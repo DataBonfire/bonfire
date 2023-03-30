@@ -14,12 +14,12 @@ import (
 )
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, sc *conf.Service, dc *conf.Data, blog *service.BlogService, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.BlogService, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
 			resource.StorageMiddleware,
-			auth.MakeAuthMiddleware(sc.Jwtsecret, nil),
+			auth.MakeAuthMiddleware(bc.Jwtsecret, nil),
 		),
 	}
 	if c.Http.Network != "" {

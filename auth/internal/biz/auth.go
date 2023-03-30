@@ -5,12 +5,13 @@ import (
 	"errors"
 	"os/user"
 
+	"github.com/databonfire/bonfire/auth/internal/conf"
 	"gorm.io/gorm"
 )
 
 type AuthUsecase struct {
-	conf     conf.Biz
-	roleRepo roleRepo
+	conf     *conf.Biz
+	roleRepo RoleRepo
 	userRepo UserRepo
 }
 

@@ -25,7 +25,7 @@ var resources = map[string]interface{}{
 }
 
 func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
-	authSvc, cleanup, err := wireService(&conf.Data{
+	authSvc, cleanup, err := wireService(&conf.Biz{}, &conf.Data{
 		Database: &conf.Data_Database{
 			Driver: opt.DataConfig.Database.Driver,
 			Source: opt.DataConfig.Database.Source,
