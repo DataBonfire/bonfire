@@ -2,7 +2,7 @@ package biz
 
 import (
 	"context"
-	"os/user"
+	"github.com/databonfire/bonfire/auth/user"
 )
 
 type UserRepo interface {

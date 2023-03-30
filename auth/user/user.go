@@ -20,17 +20,24 @@ type User struct {
 	ManagerID      uint                 `json:"manager_id"`
 	Manager        *User
 
-	Permissions []*Permission `gorm:"-"`
+	Permissions  []*Permission `gorm:"-"`
+	Subordinates []uint        `gorm:"-"`
 }
 
 func (u *User) Whoami() uint {
 	return u.ID
 }
 
-func (u *User) Allow(action string, resource string, record interface{}) bool {
+func (u *User) Allow(action string, _resource string, record interface{}) bool {
+	// todo 强制返回 true，测试用
+	return true
 	for _, p := range u.Permissions {
-		if p.Resource == resource && p.Action == action {
-			return p.Record == nil || p.Record.Match(record)
+		if p.Resource == _resource && p.Action == action {
+			return p.Record == nil || p.Record.Match(record, &resource.UserRelation{
+				UserId:         u.ID,
+				OrganizationID: u.OrganizationID,
+				Subordinates:   u.Subordinates,
+			})
 		}
 	}
 	return false

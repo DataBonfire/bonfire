@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/databonfire/bonfire/auth/user"
 	"regexp"
 	"strings"
 
@@ -48,26 +49,16 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 		}
 
 		// Auth
-		var ac resource.AC
-		if false {
-			userSession, err := utils.ParseToken(token, m.secret)
-			if err != nil {
-				return nil, err
-			}
-			uid := userSession.UserId
+		userSession, err := utils.ParseToken(token, m.secret)
+		if err != nil {
+			return nil, err
+		}
+		uid := userSession.UserId
 
-			// todo AC
-			// user -> roles
-			// roles -> permissions
-			// match
-
-			// Access control
-			user, err := ctx.Value("storage").(map[string]resource.Repo)["users"].Find(ctx, uid)
-			if err != nil {
-				return nil, err
-			}
-			_ = user
-			//ac := user.AC()
+		// Access control
+		ac, err := getAC(ctx, uid)
+		if err != nil {
+			return nil, err
 		}
 		if ac != nil && !ac.Allow(act, res, nil) {
 			return nil, ErrPermissionDenied
@@ -75,6 +66,49 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 		ctx = context.WithValue(ctx, "author", ac)
 		return next(ctx, req)
 	})
+}
+
+func getAC(ctx context.Context, uid uint) (resource.AC, error) {
+	// 获取 user 基本信息
+	userInterface, err := ctx.Value("storage").(map[string]resource.Repo)["users"].Find(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+	userInfo, ok := userInterface.(*user.User)
+	if !ok {
+		return nil, errors.New("User info error")
+	}
+
+	// 根据用户基本信息获取 角色和权限数据
+	var roles []*user.Role
+	err = ctx.Value("storage").(map[string]resource.Repo)["roles"].DB().Preload("Permissions").
+		Where("name in ?", ([]string)(userInfo.Roles)).Find(roles).Error
+	if err != nil {
+		return nil, err
+	}
+
+	permissions := make([]*user.Permission, 0)
+	for _, v := range roles {
+		permissions = append(permissions, v.Permissions...)
+	}
+	userInfo.Permissions = permissions
+
+	// 根据用户基本信息获取 下属id
+	usersInterface, _, err := ctx.Value("storage").(map[string]resource.Repo)["users"].List(ctx, &resource.ListRequest{
+		Filter:  &resource.Filter{"manager_id": userInfo.ID},
+		PerPage: 100,
+	})
+	subordinates := make([]uint, 0)
+	for _, v := range usersInterface {
+		_user, ok := v.(*user.User)
+		if !ok {
+			return nil, errors.New("User info error")
+		}
+		subordinates = append(subordinates, _user.ID)
+	}
+
+	userInfo.Subordinates = subordinates
+	return userInfo, nil
 }
 
 func MakeAuthMiddleware(opt *Option) middleware.Middleware {

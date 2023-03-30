@@ -45,7 +45,17 @@ func (s *AuthService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 	return &pb.RegisterReply{}, nil
 }
 func (s *AuthService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginReply, error) {
-	return &pb.LoginReply{}, nil
+
+	userInfo, tokenStr, err := s.authUsecase.Login(ctx, req.Email, req.Phone, req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.LoginReply{
+		Token:  tokenStr,
+		Name:   userInfo.Name,
+		Avatar: userInfo.Avatar,
+	}, nil
 }
 
 var (

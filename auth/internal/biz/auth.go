@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"errors"
+	"github.com/databonfire/bonfire/auth/internal/utils"
 	"os/user"
 
 	"github.com/databonfire/bonfire/auth/internal/conf"
@@ -45,6 +46,27 @@ func (au *AuthUsecase) Register(ctx context.Context, u *user.User) error {
 	// save
 	// notice
 }
+
+func (au *AuthUsecase) Login(ctx context.Context, email, phone, password string) (*user.User, string, error) {
+
+	userInfo, err := au.userRepo.Find(ctx, 0, email, phone)
+	if err != nil {
+		return nil, "", err
+	}
+	// todo hash password
+	passwordHashed := password
+	if userInfo.PasswordHashed != passwordHashed {
+		return nil, "", errors.New("password error")
+	}
+	// todo 获取 config
+	tokenStr, err := utils.GenToken(&utils.UserSession{UserId: userInfo.ID}, "")
+	if err != nil {
+		return nil, "", errors.New("gen token error")
+	}
+
+	return userInfo, tokenStr, nil
+}
+
 
 var (
 	ErrAccountDuplicate    = errors.New("account duplicate")
