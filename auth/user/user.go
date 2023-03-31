@@ -28,17 +28,10 @@ func (u *User) Whoami() uint {
 	return u.ID
 }
 
-func (u *User) Allow(action string, _resource string, record interface{}) bool {
-	// todo 强制返回 true，测试用
-	return true
+func (u *User) Allow(action string, res string, record interface{}) bool {
 	for _, p := range u.Permissions {
-		if p.Resource == _resource && p.Action == action {
-			return true
-			//return p.Record == nil || p.Record.Match(record, &resource.UserRelation{
-			//	UserId:         u.ID,
-			//	OrganizationID: u.OrganizationID,
-			//	Subordinates:   u.Subordinates,
-			//})
+		if p.Resource == res && p.Action == action {
+			return record == nil || p.Record == nil || p.Record.Match(record)
 		}
 	}
 	return false
