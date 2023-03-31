@@ -20,7 +20,3 @@ type Permission struct {
 // {"action:"edit", "resource": "campaigns", "record": {"campaign_id": "mine"}, "status": {"lt": 3}}
 // campaigns -> list -> show edit btn?
 // hasPermission(action, resource)
-
-func m() {
-
-}

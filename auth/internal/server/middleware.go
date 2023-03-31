@@ -88,11 +88,11 @@ func getAC(ctx context.Context, uid uint) (resource.AC, error) {
 		return nil, err
 	}
 
-	//permissions := make([]*user.Permission, 0)
-	//for _, v := range roles {
-	//	//permissions = append(permissions, v.Permissions...)
-	//}
-	//userInfo.Permissions = permissions
+	permissions := make([]*user.Permission, 0)
+	for _, v := range roles {
+		permissions = append(permissions, v.Permissions...)
+	}
+	userInfo.Permissions = permissions
 
 	// 根据用户基本信息获取 下属id
 	usersInterface, _, err := resource.GetRepo("auth.users").List(ctx, &resource.ListRequest{
@@ -109,6 +109,8 @@ func getAC(ctx context.Context, uid uint) (resource.AC, error) {
 	}
 
 	userInfo.Subordinates = subordinates
+	userInfo.Convert()
+
 	return userInfo, nil
 }
 

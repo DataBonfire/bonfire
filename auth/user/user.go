@@ -46,8 +46,6 @@ func (u *User) Allow(action string, _resource string, record interface{}) bool {
 
 func (u *User) GetFilters(action string, res string) []resource.Filter {
 
-
-
 	return []resource.Filter{
 		{"created_by": 1},
 		{"created_by": []int64{2, 3}, "title": &resource.Constraint{
@@ -55,4 +53,33 @@ func (u *User) GetFilters(action string, res string) []resource.Filter {
 		}},
 		{"organization_id": 1},
 	}
+}
+
+// 1. me 2. org 3. sub (Subordinate)
+func (u *User) Convert() {
+	permissions := make([]*Permission, 0)
+	for _, permission := range u.Permissions {
+		isValid := true
+		for k, v := range permission.Record {
+			switch v {
+			case "me":
+				permission.Record[k] = u.ID
+			case "org":
+				if u.OrganizationID == 0 {
+					isValid = false
+					break
+				}
+				permission.Record[k] = u.OrganizationID
+
+			case "sub":
+				if len(u.Subordinates) > 0 {
+					permission.Record[k] = u.Subordinates
+				}
+			}
+		}
+		if isValid {
+			permissions = append(permissions, permission)
+		}
+	}
+	u.Permissions = permissions
 }

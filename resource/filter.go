@@ -75,22 +75,24 @@ type UserRelation struct {
 
 func (f Filter) Match(record interface{}, userRelation *UserRelation) bool {
 	return true
-	//vf := reflect.ValueOf(record)
-	//if vf.Kind() == reflect.Pointer {
-	//	vf = vf.Elem()
-	//}
-	//if vf.Kind() != reflect.Struct {
-	//	return false
-	//}
+
+	vf := reflect.ValueOf(record)
+	if vf.Kind() == reflect.Pointer {
+		vf = vf.Elem()
+	}
+	if vf.Kind() != reflect.Struct {
+		return false
+	}
+
 	//// todo 如果 record 没有 ID 或者 OrganizationID 如何处理
 	//// 暂时直接返回 false
 	//
 	//for k, v := range f {
-	//	kid, ok := reflectValueConvert(vf, k)
-	//	if !ok {
-	//		// todo 字段配置错误 或者 字段类型错误，需要跳过还是直接返回失败 ?
-	//		return false
-	//	}
+	//	//kid, ok := reflectValueConvert(vf, k)
+	//	//if !ok {
+	//	//	// todo 字段配置错误 或者 字段类型错误，需要跳过还是直接返回失败 ?
+	//	//	return false
+	//	//}
 	//
 	//	switch v.(type) {
 	//	case string:
@@ -130,8 +132,8 @@ func (f Filter) Match(record interface{}, userRelation *UserRelation) bool {
 	//	}
 	//
 	//}
-	//
-	//return false
+
+	return false
 }
 
 type Constraint struct {
