@@ -38,14 +38,13 @@ func (u *User) Allow(action string, res string, record interface{}) bool {
 }
 
 func (u *User) GetFilters(action string, res string) []resource.Filter {
-
-	return []resource.Filter{
-		{"created_by": 1},
-		{"created_by": []int64{2, 3}, "title": &resource.Constraint{
-			Like: "xxxx",
-		}},
-		{"organization_id": 1},
+	var filters []resource.Filter
+	for _, p := range u.Permissions {
+		if p.Action == action && p.Resource == res && p.Record != nil {
+			filters = append(filters, p.Record)
+		}
 	}
+	return filters
 }
 
 // 1. me 2. org 3. sub (Subordinate)
