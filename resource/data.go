@@ -37,7 +37,7 @@ func NewData(c *DataConfig, logger log.Logger) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
-	return &Data{db}, cleanup, nil
+	return &Data{db.Debug()}, cleanup, nil
 }
 
 type Repo interface {
@@ -93,11 +93,11 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 			db.Where(acDB)
 		}
 	}
-	if err = db.Debug().Model(r.model).Count(&total).Offset(int(lr.Paged * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
+	if err = db.Model(r.model).Count(&total).Offset(int(lr.Paged * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
 		return nil, 0, err
 	}
 
-	//db := r.data.db.Debug()
+	//db := r.data.db
 	//go func() {
 	//	for _, v := range lr.Sorts {
 	//		db.Order(fmt.Sprintf("%s %s", v.By, v.Order))
@@ -136,7 +136,7 @@ func (r *repo) Find(ctx context.Context, id uint) (interface{}, error) {
 }
 
 func (r *repo) Save(ctx context.Context, record interface{}) error {
-	return r.data.db.Model(r.model).Save(record).Error
+	return r.data.db.Save(record).Error
 }
 
 func (r *repo) Delete(ctx context.Context, id uint) error {

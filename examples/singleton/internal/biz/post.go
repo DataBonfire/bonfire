@@ -14,3 +14,8 @@ type Post struct {
 	PublishedAt time.Time
 	PublishedBy uint
 }
+
+func (p *Post) BeforeCreate(tx *gorm.DB) (err error) {
+	p.PublishedAt = time.Now()
+	return nil
+}
