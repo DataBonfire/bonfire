@@ -3,14 +3,13 @@ package rbac
 import (
 	"github.com/databonfire/bonfire/filter"
 	"github.com/databonfire/bonfire/resource"
-	"gorm.io/gorm"
 )
 
 type Permission struct {
-	gorm.Model
-	Actions  resource.StringSlice // list,read,create,edit,delete,export,print
-	Resource string               // *, campaigns
-	Record   filter.Filter
+	resource.Model
+	Actions  resource.StringSlice `json:"actions"`  // list,read,create,edit,delete,export,print
+	Resource string               `json:"resource"` // *, campaigns
+	Record   filter.Filter        `json:"record"`
 }
 
 // 1. me 2. org 3. 下属

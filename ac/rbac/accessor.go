@@ -5,6 +5,7 @@ import "github.com/databonfire/bonfire/ac"
 type Accessor interface {
 	ac.Accessor
 	GetRoles() []string
+	GetRoleType() string
 }
 
 type rolevisitor string
@@ -25,4 +26,8 @@ func (v *rolevisitor) GetSubordinates() []uint {
 
 func (v *rolevisitor) GetRoles() []string {
 	return []string{string(*v)}
+}
+
+func (v *rolevisitor) GetRoleType() string {
+	return string(*v)
 }

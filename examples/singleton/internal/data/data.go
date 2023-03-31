@@ -57,16 +57,16 @@ var perms = []*rbac.Permission{
 }
 var seeds = []interface{}{
 	[]*rbac.Role{
-		{Model: gorm.Model{ID: 1}, Name: "editor", Permissions: []*rbac.Permission{
+		{Model: gorm.Model{ID: 1}, Name: "editor", Type: "user", Permissions: []*rbac.Permission{
 			perms[0],
 			perms[3],
 		}},
-		{Model: gorm.Model{ID: 2}, Name: "editor_manager", Permissions: []*rbac.Permission{
+		{Model: gorm.Model{ID: 2}, Name: "editor_manager", Type: "user", Permissions: []*rbac.Permission{
 			perms[0],
 			perms[2],
 			perms[3],
 		}},
-		{Model: gorm.Model{ID: 3}, Name: "admin", Permissions: []*rbac.Permission{
+		{Model: gorm.Model{ID: 3}, Name: "admin", Type: "admin", Permissions: []*rbac.Permission{
 			perms[0],
 			perms[1],
 		}},

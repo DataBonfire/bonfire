@@ -1,10 +1,11 @@
 package rbac
 
-import "gorm.io/gorm"
+import "github.com/databonfire/bonfire/resource"
 
 type Role struct {
-	gorm.Model
-	Name             string
-	IsRegisterPublic bool
-	Permissions      []*Permission `gorm:"many2many:role_permissions;"`
+	resource.Model
+	Name             string        `json:"name"`
+	Type             string        `json:"type"`
+	IsRegisterPublic bool          `json:"is_register_public"`
+	Permissions      []*Permission `json:"-" gorm:"many2many:role_permissions;"`
 }

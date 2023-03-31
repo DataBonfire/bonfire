@@ -1,10 +1,10 @@
 package user
 
-import "gorm.io/gorm"
+import "github.com/databonfire/bonfire/resource"
 
 type Organization struct {
-	gorm.Model
-	Name    string
-	Logo    string
-	Address string
+	resource.Model
+	Name    string `json:"name"`
+	Logo    string `json:"logo"`
+	Address string `json:"address"`
 }

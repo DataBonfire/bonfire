@@ -2,11 +2,11 @@ package user
 
 import (
 	"github.com/databonfire/bonfire/resource"
-	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
+	resource.Model
+	Type           string `json:"type"`
 	Name           string `json:"name"`
 	Avatar         string `json:"avatar"`
 	Email          string `json:"email"`
@@ -40,4 +40,8 @@ func (u *User) GetSubordinates() []uint {
 
 func (u *User) GetRoles() []string {
 	return u.Roles
+}
+
+func (u *User) GetRoleType() string {
+	return u.Type
 }

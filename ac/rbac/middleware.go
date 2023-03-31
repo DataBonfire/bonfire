@@ -33,7 +33,7 @@ func MakeACMiddleware(logger log.Logger) middleware.Middleware {
 				return nil, ac.ErrPermissionDenied
 			}
 
-			return next(context.WithValue(ctx, "acer", rbac), req)
+			return next(&Context{context.WithValue(ctx, "acer", rbac).(http.Context)}, req)
 		}
 	}
 }
