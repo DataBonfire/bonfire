@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package examples.planet.api.influencer.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/databonfire/bonfire/examples/planet/api/influencer/v1;v1";
+option java_multiple_files = true;
+option java_package = "examples.singleton.api.blog.v1";
+
+service Influencer {
+	rpc CreateInfluencer (CreateInfluencerRequest) returns (CreateInfluencerReply);
+	rpc UpdateInfluencer (UpdateInfluencerRequest) returns (UpdateInfluencerReply);
+	rpc DeleteInfluencer (DeleteInfluencerRequest) returns (DeleteInfluencerReply);
+	rpc GetInfluencer (GetInfluencerRequest) returns (GetInfluencerReply);
+	rpc ListInfluencer (ListInfluencerRequest) returns (ListInfluencerReply) {
+    option (google.api.http) = {
+      get: "/v1/influencers"
+    };
+  };
+}
+
+message CreateInfluencerRequest {}
+message CreateInfluencerReply {}
+
+message UpdateInfluencerRequest {}
+message UpdateInfluencerReply {}
+
+message DeleteInfluencerRequest {}
+message DeleteInfluencerReply {}
+
+message GetInfluencerRequest {}
+message GetInfluencerReply {}
+
+message ListInfluencerRequest {}
+message ListInfluencerReply {}
