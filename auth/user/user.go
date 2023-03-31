@@ -45,8 +45,14 @@ func (u *User) Allow(action string, _resource string, record interface{}) bool {
 }
 
 func (u *User) GetFilters(action string, res string) []resource.Filter {
+
+
+
 	return []resource.Filter{
 		{"created_by": 1},
-		{"created_by": []int64{2, 3}, "title": map[string]string{"like": "xxx"}},
+		{"created_by": []int64{2, 3}, "title": &resource.Constraint{
+			Like: "xxxx",
+		}},
+		{"organization_id": 1},
 	}
 }

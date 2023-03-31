@@ -8,25 +8,27 @@ import (
 )
 
 func GormFilter(db *gorm.DB, filters ...Filter) (*gorm.DB, error) {
-	if filters == nil {
-		return db, nil
-	}
 	groupDB := db.Where("")
 	for _, filter := range filters {
 		chains := db.Where("")
-		for fieldName, fieldValue := range filter {
-			filterAssert[float64](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
-			filterAssert[string](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
-			filterAssert[bool](chains, fieldValue, fmt.Sprintf("%s = ?", fieldName))
-			filterAssert[[]interface{}](chains, fieldValue, fmt.Sprintf("%s in ?", fieldName))
-			if constraint, ok := fieldValue.(*Constraint); ok {
+		for fieldName, v := range filter {
+			rv := reflect.TypeOf(v)
+			switch rv.Kind() {
+			case reflect.Slice, reflect.Array:
+				chains.Where(fmt.Sprintf("%s in ?", fieldName), v)
+			case reflect.Pointer:
+				constraint, ok := v.(*Constraint)
+				if !ok {
+					continue
+				}
 				if constraint.Negate {
 					notDb := constraintFilter(db, constraint, fieldName)
 					chains.Not(notDb)
 				} else {
 					constraintFilter(chains, constraint, fieldName)
 				}
-				continue
+			default:
+				chains.Where(fmt.Sprintf("%s = ?", fieldName), v)
 			}
 		}
 		groupDB.Or(chains)

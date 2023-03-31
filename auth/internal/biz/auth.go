@@ -81,6 +81,14 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	return userInfo, tokenStr, nil
 }
 
+func (au *AuthUsecase) GetPermissions(ctx context.Context, req *pb.GetPermissionsRequest) ([]*user.Permission, error) {
+	userInfo, ok := ctx.Value("author").(user.User)
+	if !ok {
+		return nil, errors.New("get user from context.Context error ")
+	}
+	return userInfo.Permissions, nil
+}
+
 var (
 	ErrAccountDuplicate    = errors.New("account duplicate")
 	ErrRegisterIsNotPublic = errors.New("register is not public")
