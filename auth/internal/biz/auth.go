@@ -82,7 +82,7 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 }
 
 func (au *AuthUsecase) GetPermissions(ctx context.Context, req *pb.GetPermissionsRequest) ([]*user.Permission, error) {
-	userInfo, ok := ctx.Value("author").(user.User)
+	userInfo, ok := ctx.Value("author").(*user.User)
 	if !ok {
 		return nil, errors.New("get user from context.Context error ")
 	}
