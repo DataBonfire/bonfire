@@ -194,7 +194,7 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 			if svc.Option.Parent != "" {
 				if parent, err := GetRepo(svc.Option.Parent).Find(ctx, r.PID); err != nil {
 					return nil, err
-				} else if !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
+				} else if !stdctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
 					return nil, ErrPermissionDenied
 				}
 			}
@@ -204,7 +204,7 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 				return nil, err
 			}
 			// Orphan resource access control
-			if svc.Option.Parent == "" && !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Resource, record) {
+			if svc.Option.Parent == "" && !stdctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Resource, record) {
 				return nil, ErrPermissionDenied
 			}
 

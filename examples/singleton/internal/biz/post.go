@@ -15,3 +15,8 @@ type Post struct {
 	CreatedBy      uint `gorm:"index"`
 	OrganizationID uint `gorm:"index"`
 }
+
+func (p *Post) BeforeCreate(tx *gorm.DB) (err error) {
+	p.PublishedAt = time.Now()
+	return nil
+}
