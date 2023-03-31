@@ -2,28 +2,43 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/databonfire/bonfire/auth/api/v1"
 	"github.com/databonfire/bonfire/auth/internal/biz"
+	"github.com/databonfire/bonfire/auth/internal/conf"
 )
 
 type AuthService struct {
 	pb.UnimplementedAuthServer
 
-	authUsecase *biz.AuthUsecase
+	authUsecase         *biz.AuthUsecase
+	publicRegisterRoles []string
 }
 
-func NewAuthService(au *biz.AuthUsecase) *AuthService {
+func NewAuthService(c *conf.Biz, au *biz.AuthUsecase) *AuthService {
 	return &AuthService{
-		authUsecase: au,
+		authUsecase:         au,
+		publicRegisterRoles: c.PublicRegisterRoles,
 	}
 }
 
 func (s *AuthService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterReply, error) {
+	var registerValid bool
+	for _, v := range s.publicRegisterRoles {
+		if v == req.Role {
+			registerValid = true
+			break
+		}
+	}
+	if !registerValid {
+		return nil, fmt.Errorf("%s is not public register.", req.Role)
+	}
 	return &pb.RegisterReply{}, s.authUsecase.Register(ctx, req)
 }
 
 func (s *AuthService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginReply, error) {
+
 	userInfo, tokenStr, err := s.authUsecase.Login(ctx, req)
 	if err != nil {
 		return nil, err
@@ -42,29 +57,3 @@ func (s *AuthService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 	}
 	return reply, nil
 }
-
-//func (s *AuthService) GetPermissions(ctx context.Context, req *pb.GetPermissionsRequest) (*pb.GetPermissionsReply, error) {
-//	permissions, err := s.authUsecase.GetPermissions(ctx, req)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	getPermissionsReply := &pb.GetPermissionsReply{Permissions: make([]*pb.GetPermissionsReply_Permission, 0)}
-//	for _, permission := range permissions {
-//		if permission.Record == nil {
-//			continue
-//		}
-//		tempBytes, err := json.Marshal(permission)
-//		if err != nil {
-//			return nil, err
-//		}
-//		var p pb.GetPermissionsReply_Permission
-//		if err = json.Unmarshal(tempBytes, &p); err != nil {
-//			return nil, err
-//		}
-//
-//		getPermissionsReply.Permissions = append(getPermissionsReply.Permissions, &p)
-//	}
-//
-//	return getPermissionsReply, nil
-//}

@@ -51,10 +51,11 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 				"posts.comments": &biz.Comment{},
 				//"posts.comments.replies": &biz.Reply{},
 			},
-			DataConfig:   rdc,
-			JWTSecret:    bc.Jwtsecret,
-			PasswordSalt: bc.PasswordSalt,
-			Logger:       logger,
+			DataConfig:          rdc,
+			JWTSecret:           bc.Jwtsecret,
+			PasswordSalt:        bc.PasswordSalt,
+			PublicRegisterRoles: []string{"editor"},
+			Logger:              logger,
 		})
 		rbac.RegisterHTTPServer(srv)
 		//resource.RegisterHTTPServer(srv, &resource.Option{

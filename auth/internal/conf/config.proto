@@ -14,6 +14,7 @@ message Bootstrap {
 message Biz {
   string jwtsecret = 1;
   string password_salt = 2;
+  repeated string public_register_roles = 3;
 }
 
 message Server {

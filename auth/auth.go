@@ -12,11 +12,12 @@ import (
 )
 
 type Option struct {
-	Resources    map[string]interface{}
-	DataConfig   *resource.DataConfig
-	JWTSecret    string
-	PasswordSalt string
-	Logger       log.Logger
+	Resources           map[string]interface{}
+	DataConfig          *resource.DataConfig
+	JWTSecret           string
+	PasswordSalt        string
+	PublicRegisterRoles []string
+	Logger              log.Logger
 }
 
 var resources = map[string]interface{}{
@@ -28,8 +29,9 @@ var resources = map[string]interface{}{
 
 func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	authSvc, cleanup, err := wireService(&conf.Biz{
-		Jwtsecret:    opt.JWTSecret,
-		PasswordSalt: opt.PasswordSalt,
+		Jwtsecret:           opt.JWTSecret,
+		PasswordSalt:        opt.PasswordSalt,
+		PublicRegisterRoles: opt.PublicRegisterRoles,
 	}, &conf.Data{
 		Database: &conf.Data_Database{
 			Driver: opt.DataConfig.Database.Driver,
