@@ -1,10 +1,6 @@
 package server
 
 import (
-	"strings"
-
-	stdhttp "net/http"
-
 	pb "github.com/databonfire/bonfire/auth/api/v1"
 	"github.com/databonfire/bonfire/auth/internal/conf"
 	"github.com/databonfire/bonfire/auth/internal/service"
@@ -55,22 +51,22 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 		DataConfig: rdc,
 		Logger:     logger,
 	})
-	resource.RegisterHTTPServer(srv, &resource.Option{
-		Resource:   "roles",
-		Model:      &user.Role{},
-		DataConfig: rdc,
-		Logger:     logger,
-	})
-	resource.RegisterHTTPServer(srv, &resource.Option{
-		Resource:   "permissions",
-		Model:      &user.Permission{},
-		DataConfig: rdc,
-		Logger:     logger,
-	})
+	//resource.RegisterHTTPServer(srv, &resource.Option{
+	//	Resource:   "roles",
+	//	Model:      &user.Role{},
+	//	DataConfig: rdc,
+	//	Logger:     logger,
+	//})
+	//resource.RegisterHTTPServer(srv, &resource.Option{
+	//	Resource:   "permissions",
+	//	Model:      &user.Permission{},
+	//	DataConfig: rdc,
+	//	Logger:     logger,
+	//})
 	return srv
 }
 
-func readHTTPTransporter(t http.Transporter) (token, path, action, res string) {
+func readHTTPTransporter(t http.Transporter) (token, path string) {
 	req := t.Request()
 	path = req.URL.Path
 	token = req.Header.Get("Authorization")
@@ -78,38 +74,6 @@ func readHTTPTransporter(t http.Transporter) (token, path, action, res string) {
 	l := len(scheme)
 	if len(token) > l+1 && token[:l] == scheme {
 		token = token[l+1:]
-	}
-
-	chips := strings.Split(strings.Trim(path, "/"), "/")
-	res = chips[0]
-	switch req.Method {
-	case stdhttp.MethodGet:
-		if len(chips) == 1 {
-			// GET /posts
-			action = resource.ActionBrowse
-		} else {
-			// GET /posts/1/comments
-			action = resource.ActionShow
-		}
-	case stdhttp.MethodPost, stdhttp.MethodPut, stdhttp.MethodPatch:
-		if len(chips) == 1 {
-			// [POST|PUT|PATCH] /posts
-			action = resource.ActionCreate
-		} else {
-			// [POST|PUT|PATCH] /posts/1
-			// [POST|PUT|PATCH] /posts/1/{action}
-			// [POST|PUT|PATCH] /posts/1/comments
-			// [POST|PUT|PATCH] /posts/1/comments/1
-			action = resource.ActionEdit
-		}
-	case stdhttp.MethodDelete:
-		if len(chips) == 1 {
-			// DELETE /posts/1
-			action = resource.ActionDelete
-		} else {
-			// DELETE /posts/1/comments/1
-			action = resource.ActionEdit
-		}
 	}
 	return
 }

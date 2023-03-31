@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/databonfire/bonfire/examples/singleton/internal/conf"
+	"github.com/databonfire/bonfire/examples/singleton/internal/data"
 	"github.com/databonfire/bonfire/examples/singleton/internal/server"
 	"github.com/databonfire/bonfire/examples/singleton/internal/service"
 
@@ -17,5 +18,5 @@ import (
 
 // wireApp init kratos application.
 func wireApp(*conf.Biz, *conf.Server, *conf.Data, log.Logger) (*kratos.App, func(), error) {
-	panic(wire.Build(server.ProviderSet, service.ProviderSet, newApp))
+	panic(wire.Build(server.ProviderSet, data.ProviderSet, service.ProviderSet, newApp))
 }

@@ -4,13 +4,14 @@ import (
 	"context"
 
 	pb "github.com/databonfire/bonfire/examples/singleton/api/blog/v1"
+	"github.com/databonfire/bonfire/examples/singleton/internal/data"
 )
 
 type BlogService struct {
 	pb.UnimplementedBlogServer
 }
 
-func NewBlogService() *BlogService {
+func NewBlogService(data *data.Data) *BlogService {
 	return &BlogService{}
 }
 

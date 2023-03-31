@@ -1,4 +1,4 @@
-package user
+package rbac
 
 import "gorm.io/gorm"
 

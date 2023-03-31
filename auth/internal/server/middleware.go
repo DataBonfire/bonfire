@@ -6,10 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/databonfire/bonfire/auth/user"
-
 	"github.com/databonfire/bonfire/auth/internal/utils"
-
+	"github.com/databonfire/bonfire/auth/user"
 	"github.com/databonfire/bonfire/resource"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
@@ -40,7 +38,7 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 			return nil, errors.New("Unexcept err when get transport from server context")
 		}
 		htx := tx.(http.Transporter)
-		token, path, act, res := readHTTPTransporter(htx)
+		token, path := readHTTPTransporter(htx)
 
 		// Public Endpoints
 		for _, v := range append(m.publicPaths, publicPaths...) {
@@ -54,71 +52,19 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 		if err != nil {
 			return nil, err
 		}
-		uid := userSession.UserId
-
-		// Access control
-		ac, err := getAC(ctx, uid)
-		if err != nil {
+		db := resource.GetRepo("auth.users").(resource.Repo).DB()
+		var u user.User
+		if err = db.First(&u, userSession.UserId).Error; err != nil {
 			return nil, err
 		}
-		if ac != nil && !ac.Allow(act, res, nil) {
-			return nil, ErrPermissionDenied
+		if err = db.Model(&user.User{}).Select("id").Where("manager_id", u.ID).Find(&u.Subordinates).Error; err != nil {
+			return nil, err
 		}
-		ctx = context.WithValue(ctx, "author", ac)
-		return next(ctx, req)
+		return next(context.WithValue(ctx, "author", &u), req)
 	})
-}
-
-func getAC(ctx context.Context, uid uint) (resource.AC, error) {
-	// 获取 user 基本信息
-	userInterface, err := resource.GetRepo("auth.users").Find(ctx, uid)
-	if err != nil {
-		return nil, err
-	}
-	userInfo, ok := userInterface.(*user.User)
-	if !ok {
-		return nil, errors.New("User info error")
-	}
-
-	// 根据用户基本信息获取 角色和权限数据
-	var roles []*user.Role
-	err = resource.GetRepo("auth.roles").DB().Preload("Permissions").
-		Where("name in ?", ([]string)(userInfo.Roles)).Find(&roles).Error
-	if err != nil {
-		return nil, err
-	}
-
-	permissions := make([]*user.Permission, 0)
-	for _, v := range roles {
-		permissions = append(permissions, v.Permissions...)
-	}
-	userInfo.Permissions = permissions
-
-	// 根据用户基本信息获取 下属id
-	usersInterface, _, err := resource.GetRepo("auth.users").List(ctx, &resource.ListRequest{
-		Filter:  resource.Filter{"manager_id": userInfo.ID},
-		PerPage: 100,
-	})
-	subordinates := make([]uint, 0)
-	for _, v := range usersInterface {
-		_user, ok := v.(*user.User)
-		if !ok {
-			return nil, errors.New("User info error")
-		}
-		subordinates = append(subordinates, _user.ID)
-	}
-
-	userInfo.Subordinates = subordinates
-	userInfo.Convert()
-
-	return userInfo, nil
 }
 
 func MakeAuthMiddleware(opt *Option) middleware.Middleware {
 	am := &authMiddleware{secret: opt.Secret, publicPaths: opt.PublicPaths}
 	return (middleware.Middleware)(am.Handle)
 }
-
-var (
-	ErrPermissionDenied = errors.New("permission denied")
-)

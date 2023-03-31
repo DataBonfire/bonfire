@@ -20,9 +20,9 @@ type Option struct {
 }
 
 var resources = map[string]interface{}{
-	"users":         &user.User{},
-	"roles":         &user.Role{},
-	"permissions":   &user.Permission{},
+	"users": &user.User{},
+	//"roles":         &user.Role{},
+	//"permissions":   &user.Permission{},
 	"organizations": &user.Organization{},
 }
 

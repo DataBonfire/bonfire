@@ -1,12 +1,14 @@
 package resource
 
+import "github.com/databonfire/bonfire/filter"
+
 type (
 	ListRequest struct {
-		FilterJsonlized string  `json:"f"`
-		Filter          Filter  `json:"filter"`
-		PerPage         int64   `json:"per_page"`
-		Paged           int64   `json:"paged"`
-		Sorts           []*Sort `json:"sorts"`
+		FilterJsonlized string        `json:"f"`
+		Filter          filter.Filter `json:"filter"`
+		PerPage         int64         `json:"per_page"`
+		Paged           int64         `json:"paged"`
+		Sorts           []*Sort       `json:"sorts"`
 	}
 
 	Sort struct {

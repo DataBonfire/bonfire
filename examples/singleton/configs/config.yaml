@@ -11,7 +11,7 @@ server:
 data:
   database:
     driver: mysql
-    source: dev:123123@tcp(192.168.9.139:3306)/kolplanet?charset=utf8mb4&parseTime=True&loc=Local
+    source: dev:123123@tcp(192.168.9.139:3306)/bonfire_blog?charset=utf8mb4&parseTime=True&loc=Local
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s

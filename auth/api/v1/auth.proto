@@ -22,11 +22,6 @@ service Auth {
       body: "*",
     };
   };
-  rpc GetPermissions (GetPermissionsRequest) returns (GetPermissionsReply) {
-    option (google.api.http) = {
-      get: "/auth/permissions",
-    };
-  }
 }
 
 message RegisterRequest {
@@ -57,16 +52,4 @@ message LoginReply {
 message Organization {
   string name = 1;
   string logo = 2;
-}
-
-message GetPermissionsRequest {}
-
-message GetPermissionsReply {
-  message Permission {
-    string action = 1;
-    string resource = 2;
-    // {"created_by": "me"}
-    google.protobuf.Struct record = 3;
-  }
-  repeated Permission permissions = 1;
 }

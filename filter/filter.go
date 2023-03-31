@@ -1,4 +1,4 @@
-package resource
+package filter
 
 import (
 	"database/sql/driver"
@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+
+	"gorm.io/gorm/schema"
 )
 
 type Filter map[string]interface{}
@@ -67,72 +69,49 @@ func (f Filter) Value() (driver.Value, error) {
 // campaigns -> list -> show edit btn?
 // hasPermission(action, resource)
 
-type UserRelation struct {
-	UserId         uint
-	OrganizationID uint
-	Subordinates   []uint
-}
+func (f Filter) Match(record interface{}) bool {
+	recordeReflectType := reflect.TypeOf(record)
 
-func (f Filter) Match(record interface{}, userRelation *UserRelation) bool {
-	return true
-
-	vf := reflect.ValueOf(record)
-	if vf.Kind() == reflect.Pointer {
-		vf = vf.Elem()
+	if recordeReflectType.Kind() == reflect.Pointer {
+		recordeReflectType = recordeReflectType.Elem()
 	}
-	if vf.Kind() != reflect.Struct {
+	// record 不是 reflect.Struct ，返回 false
+	if recordeReflectType.Kind() != reflect.Struct {
 		return false
 	}
+	for i, n := 0, recordeReflectType.NumField(); i < n; i++ {
+		structFieldName := recordeReflectType.Field(i).Name
+		fieldName := schema.NamingStrategy{}.ColumnName("", structFieldName)
+		fv, ok := f[fieldName]
+		if !ok {
+			continue
+		}
+		vf := reflect.ValueOf(record)
+		if vf.Kind() == reflect.Pointer {
+			vf = vf.Elem()
+		}
 
-	//// todo 如果 record 没有 ID 或者 OrganizationID 如何处理
-	//// 暂时直接返回 false
-	//
-	//for k, v := range f {
-	//	//kid, ok := reflectValueConvert(vf, k)
-	//	//if !ok {
-	//	//	// todo 字段配置错误 或者 字段类型错误，需要跳过还是直接返回失败 ?
-	//	//	return false
-	//	//}
-	//
-	//	switch v.(type) {
-	//	case string:
-	//		// created_by
-	//		createdBy, ok := reflectValueTConvert[uint](vf, "CreatedBy")
-	//		if !ok {
-	//			return false
-	//		}
-	//		organizationID, ok := reflectValueTConvert[uint](vf, "OrganizationID")
-	//		if !ok {
-	//			return false
-	//		}
-	//		// todo 如果是其他字段, 如 campaign_id，还需要把 repo 传进来查询
-	//		switch v.(string) {
-	//		case "me":
-	//			return createdBy == userRelation.UserId
-	//		case "org":
-	//			return organizationID == userRelation.OrganizationID
-	//		case "sub":
-	//			return isInSlice[uint](createdBy, userRelation.Subordinates)
-	//		default:
-	//
-	//		}
-	//	//case map[string]interface{}:
-	//	//	mb, _ := json.Marshal(v)
-	//	//	var c Constraint
-	//	//	if err := json.Unmarshal(mb, &c); err != nil {
-	//	//		return false
-	//	//	}
-	//	//case *Constraint:
-	//	//	constraint := v.(*Constraint)
-	//	//	if constraint.GE > 0 {
-	//	//		if
-	//	//	}
-	//	default:
-	//
-	//	}
-	//
-	//}
-
+		if vf.Kind() != reflect.Struct {
+			continue
+		}
+		// 目前只处理 uint
+		// 如 influencer_id 1
+		id, ok := reflectValueTConvert[uint](vf, structFieldName)
+		if !ok {
+			continue
+		}
+		rv := reflect.TypeOf(fv)
+		switch rv.Kind() {
+		case reflect.Slice, reflect.Array:
+			if isInSlice[uint](id, fv.([]uint)) {
+				return true
+			}
+		case reflect.Uint:
+			if id == fv {
+				return true
+			}
+		}
+	}
 	return false
 }
 

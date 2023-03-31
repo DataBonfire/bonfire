@@ -6,11 +6,13 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/databonfire/bonfire/ac"
+	"github.com/databonfire/bonfire/filter"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"gorm.io/gorm/schema"
 )
 
-func RegisterHTTPServer(s *http.Server, opt *Option) func() {
+func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	// TODO add support multiple resource nest and string pid
 	if nested := strings.Split(opt.Resource, "."); len(nested) > 1 {
 		if len(nested) > 2 {
@@ -54,7 +56,7 @@ func RegisterHTTPServer(s *http.Server, opt *Option) func() {
 		pathPrefix += opt.Parent + "/{pid}/"
 	}
 	pathPrefix += opt.Resource
-	r := s.Route("/")
+	r := srv.Route("/")
 	r.GET(pathPrefix, listHTTPHandler(svc))
 	r.GET(pathPrefix+"/{id}", showHTTPHandler(svc))
 	r.POST(pathPrefix, createHTTPHandler(svc))
@@ -78,13 +80,11 @@ func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 				if err := ctx.BindVars(&r); err != nil {
 					return nil, err
 				}
-				if parent, err := GetRepo(svc.Option.Parent).Find(stdctx, r.PID); err != nil {
+				if _, err := allowActionResource(stdctx, ac.ActionShow, svc.Option.Parent, r.PID); err != nil {
 					return nil, err
-				} else if !stdctx.Value("author").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
-					return nil, ErrPermissionDenied
 				}
 				if lr.Filter == nil {
-					lr.Filter = Filter{}
+					lr.Filter = filter.Filter{}
 				}
 				// GET /posts/1/comments?filters={star:{gt:4}}
 				(map[string]interface{})(lr.Filter)[schema.NamingStrategy{}.ColumnName("", svc.Option.ParentField)] = r.PID // {{post_id: 1, star: {gt: 4}}
@@ -125,10 +125,8 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
 			if svc.Option.Parent != "" {
-				if parent, err := GetRepo(svc.Option.Parent).Find(ctx, r.PID); err != nil {
+				if _, err := allowActionResource(ctx, ac.ActionShow, svc.Option.Parent, r.PID); err != nil {
 					return nil, err
-				} else if !ctx.Value("author").(AC).Allow(ActionShow, svc.Option.Parent, parent) {
-					return nil, ErrPermissionDenied
 				}
 			}
 
@@ -137,8 +135,8 @@ func showHTTPHandler(svc *Service) func(ctx http.Context) error {
 				return nil, err
 			}
 			// Orphan resource access control
-			if svc.Option.Parent == "" && !ctx.Value("author").(AC).Allow(ActionShow, svc.Option.Resource, record) {
-				return nil, ErrPermissionDenied
+			if svc.Option.Parent == "" && (ctx.Value("acer") != nil && !ctx.Value("acer").(ac.AccessController).Allow(ctx.Value("author"), ac.ActionShow, svc.Option.Resource, record)) {
+				return nil, ac.ErrPermissionDenied
 			}
 			return record, nil
 		})(ctx, &r.ID)
@@ -166,12 +164,15 @@ func createHTTPHandler(svc *Service) func(ctx http.Context) error {
 				if err := ctx.BindVars(&r); err != nil {
 					return nil, err
 				}
-				if parent, err := GetRepo(svc.Option.Parent).Find(stdctx, r.PID); err != nil {
+				if _, err := allowActionResource(stdctx, ac.ActionEdit, svc.Option.Parent, r.PID); err != nil {
 					return nil, err
-				} else if !stdctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
-					return nil, ErrPermissionDenied
 				}
 				reflect.ValueOf(record).Elem().FieldByName(svc.Option.ParentField).Set(reflect.ValueOf(r.PID))
+			}
+			if author := stdctx.Value("author"); author != nil {
+				if accessor, ok := author.(ac.Accessor); ok {
+					reflect.ValueOf(record).Elem().FieldByName("CreatedBy").Set(reflect.ValueOf(accessor.GetID()))
+				}
 			}
 			return record, svc.repo.Save(stdctx, record)
 		})(ctx, record)
@@ -192,20 +193,18 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
 			if svc.Option.Parent != "" {
-				if parent, err := GetRepo(svc.Option.Parent).Find(ctx, r.PID); err != nil {
+				if _, err := allowActionResource(stdctx, ac.ActionEdit, svc.Option.Parent, r.PID); err != nil {
 					return nil, err
-				} else if !stdctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
-					return nil, ErrPermissionDenied
 				}
 			}
 
-			record, err := svc.repo.Find(ctx, r.ID)
+			record, err := svc.repo.Find(stdctx, r.ID)
 			if err != nil {
 				return nil, err
 			}
 			// Orphan resource access control
-			if svc.Option.Parent == "" && !stdctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Resource, record) {
-				return nil, ErrPermissionDenied
+			if svc.Option.Parent == "" && (stdctx.Value("acer") != nil && !stdctx.Value("acer").(ac.AccessController).Allow(stdctx.Value("author"), ac.ActionEdit, svc.Option.Resource, record)) {
+				return nil, ac.ErrPermissionDenied
 			}
 
 			if err = ctx.Bind(record); err != nil {
@@ -230,40 +229,30 @@ func deleteHTTPHandler(svc *Service) func(ctx http.Context) error {
 			return err
 		}
 
-		reply, err := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
 			if svc.Option.Parent != "" {
-				if parent, err := GetRepo(svc.Option.Parent).Find(ctx, r.PID); err != nil {
+				if _, err := allowActionResource(stdctx, ac.ActionEdit, svc.Option.Parent, r.PID); err != nil {
 					return nil, err
-				} else if !ctx.Value("author").(AC).Allow(ActionEdit, svc.Option.Parent, parent) {
-					return nil, ErrPermissionDenied
 				}
 			}
 
-			record, err := svc.repo.Find(ctx, r.ID)
+			record, err := svc.repo.Find(stdctx, r.ID)
 			if err != nil {
 				return nil, err
 			}
 			// Orphan resource access control
-			if svc.Option.Parent == "" && !ctx.Value("author").(AC).Allow(ActionDelete, svc.Option.Resource, record) {
-				return nil, ErrPermissionDenied
+			if svc.Option.Parent == "" && (stdctx.Value("acer") != nil && !stdctx.Value("acer").(ac.AccessController).Allow(stdctx.Value("author"), ac.ActionDelete, svc.Option.Resource, record)) {
+				return nil, ac.ErrPermissionDenied
 			}
 
-			return nil, svc.repo.Delete(ctx, r.ID)
+			return nil, svc.repo.Delete(stdctx, r.ID)
 		})(ctx, r.ID)
 		if err != nil {
 			return err
 		}
 		return ctx.Result(200, reply)
 	}
-}
-
-func toWord(s string) string {
-	var worlds []string
-	for _, v := range strings.Split(s, "_") {
-		worlds = append(worlds, strings.ToUpper(v[0:1])+v[1:])
-	}
-	return strings.Join(worlds, "")
 }
 
 var (

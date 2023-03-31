@@ -1,4 +1,4 @@
-package resource
+package ac
 
 var (
 	ActionBrowse = "browse"

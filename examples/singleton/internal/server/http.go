@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/databonfire/bonfire/ac/rbac"
 	"github.com/databonfire/bonfire/auth"
 	v1 "github.com/databonfire/bonfire/examples/singleton/api/blog/v1"
 	"github.com/databonfire/bonfire/examples/singleton/internal/biz"
@@ -19,6 +20,7 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 		http.Middleware(
 			recovery.Recovery(),
 			auth.MakeAuthMiddleware(bc.Jwtsecret, nil),
+			rbac.MakeACMiddleware(logger),
 		),
 	}
 	if c.Http.Network != "" {
@@ -43,6 +45,8 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 			Resources: map[string]interface{}{
 				"users":          &biz.User{},
 				"organizations":  &biz.Organization{},
+				"roles":          &rbac.Role{},
+				"permissions":    &rbac.Permission{},
 				"posts":          &biz.Post{},
 				"posts.comments": &biz.Comment{},
 				//"posts.comments.replies": &biz.Reply{},
@@ -52,6 +56,7 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 			PasswordSalt: bc.PasswordSalt,
 			Logger:       logger,
 		})
+		rbac.RegisterHTTPServer(srv)
 		//resource.RegisterHTTPServer(srv, &resource.Option{
 		//	Resource:   "posts",
 		//	Model:      &biz.Post{},

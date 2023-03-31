@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/databonfire/bonfire/examples/singleton/internal/conf"
+	"github.com/databonfire/bonfire/examples/singleton/internal/data"
 	"github.com/databonfire/bonfire/examples/singleton/internal/server"
 	"github.com/databonfire/bonfire/examples/singleton/internal/service"
 	"github.com/go-kratos/kratos/v2"
@@ -21,11 +22,16 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(biz *conf.Biz, confServer *conf.Server, data *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
-	blogService := service.NewBlogService()
+func wireApp(biz *conf.Biz, confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+	dataData, cleanup, err := data.NewData(confData, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	blogService := service.NewBlogService(dataData)
 	grpcServer := server.NewGRPCServer(confServer, blogService, logger)
-	httpServer := server.NewHTTPServer(confServer, biz, data, blogService, logger)
+	httpServer := server.NewHTTPServer(confServer, biz, confData, blogService, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
+		cleanup()
 	}, nil
 }

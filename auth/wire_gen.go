@@ -21,9 +21,8 @@ func wireService(confBiz *conf.Biz, confData *conf.Data, logger log.Logger) (*se
 	if err != nil {
 		return nil, nil, err
 	}
-	roleRepo := data.NewRoleRepo(dataData, logger)
 	userRepo := data.NewUserRepo(dataData, logger)
-	authUsecase := biz.NewAuthUsecase(confBiz, roleRepo, userRepo)
+	authUsecase := biz.NewAuthUsecase(confBiz, userRepo)
 	authService := service.NewAuthService(authUsecase)
 	return authService, func() {
 		cleanup()

@@ -20,65 +20,24 @@ type User struct {
 	ManagerID      uint                 `json:"manager_id" gorm:"index"`
 	Manager        *User                `gorm:"-"`
 
-	Permissions  []*Permission `gorm:"-"`
-	Subordinates []uint        `gorm:"-"`
+	Subordinates []uint `gorm:"-"`
 }
 
-func (u *User) Whoami() uint {
+func (u *User) GetID() uint {
 	return u.ID
 }
 
-func (u *User) Allow(action string, _resource string, record interface{}) bool {
-	// todo 强制返回 true，测试用
-	return true
-	for _, p := range u.Permissions {
-		if p.Resource == _resource && p.Action == action {
-			return true
-			//return p.Record == nil || p.Record.Match(record, &resource.UserRelation{
-			//	UserId:         u.ID,
-			//	OrganizationID: u.OrganizationID,
-			//	Subordinates:   u.Subordinates,
-			//})
-		}
+func (u *User) GetGroups() []uint {
+	if u.OrganizationID > 0 {
+		return []uint{u.OrganizationID}
 	}
-	return false
+	return nil
 }
 
-func (u *User) GetFilters(action string, res string) []resource.Filter {
-	var filters []resource.Filter
-	for _, p := range u.Permissions {
-		if p.Action == action && p.Resource == res && p.Record != nil {
-			filters = append(filters, p.Record)
-		}
-	}
-	return filters
+func (u *User) GetSubordinates() []uint {
+	return u.Subordinates
 }
 
-// 1. me 2. org 3. sub (Subordinate)
-func (u *User) Convert() {
-	permissions := make([]*Permission, 0)
-	for _, permission := range u.Permissions {
-		isValid := true
-		for k, v := range permission.Record {
-			switch v {
-			case "me":
-				permission.Record[k] = u.ID
-			case "org":
-				if u.OrganizationID == 0 {
-					isValid = false
-					break
-				}
-				permission.Record[k] = u.OrganizationID
-
-			case "sub":
-				if len(u.Subordinates) > 0 {
-					permission.Record[k] = u.Subordinates
-				}
-			}
-		}
-		if isValid {
-			permissions = append(permissions, permission)
-		}
-	}
-	u.Permissions = permissions
+func (u *User) GetRoles() []string {
+	return u.Roles
 }

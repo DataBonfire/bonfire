@@ -28,9 +28,8 @@ func wireApp(confBiz *conf.Biz, confServer *conf.Server, confData *conf.Data, lo
 	if err != nil {
 		return nil, nil, err
 	}
-	roleRepo := data.NewRoleRepo(dataData, logger)
 	userRepo := data.NewUserRepo(dataData, logger)
-	authUsecase := biz.NewAuthUsecase(confBiz, roleRepo, userRepo)
+	authUsecase := biz.NewAuthUsecase(confBiz, userRepo)
 	authService := service.NewAuthService(authUsecase)
 	grpcServer := server.NewGRPCServer(confServer, authService, logger)
 	httpServer := server.NewHTTPServer(confServer, confBiz, confData, authService, logger)

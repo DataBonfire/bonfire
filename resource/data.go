@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/databonfire/bonfire/ac"
+	"github.com/databonfire/bonfire/filter"
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -80,13 +82,13 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 		//errs  = make(chan error, 1)
 	)
 	rootDB := r.data.db.WithContext(ctx)
-	db, err := GormFilter(rootDB, lr.Filter)
+	db, err := filter.GormFilter(rootDB, lr.Filter)
 	if err != nil {
 		return nil, 0, err
 	}
-	if ac := ctx.Value("author"); ac != nil {
-		if filters := ac.(AC).GetFilters(ActionBrowse, r.resource); filters != nil {
-			acDB, err := GormFilter(rootDB, filters...)
+	if acer := ctx.Value("acer"); acer != nil {
+		if filters := acer.(ac.AccessController).Filters(ctx.Value("author"), ac.ActionBrowse, r.resource); filters != nil {
+			acDB, err := filter.GormFilter(rootDB, filters...)
 			if err != nil {
 				return nil, 0, err
 			}

@@ -13,29 +13,19 @@ import (
 
 type AuthUsecase struct {
 	conf     *conf.Biz
-	roleRepo RoleRepo
 	userRepo UserRepo
 }
 
-func NewAuthUsecase(c *conf.Biz, roleRepo RoleRepo, userRepo UserRepo) *AuthUsecase {
+func NewAuthUsecase(c *conf.Biz, userRepo UserRepo) *AuthUsecase {
 	return &AuthUsecase{
 		c,
-		roleRepo,
 		userRepo,
 	}
 }
 
 func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) error {
-	r, err := au.roleRepo.Find(ctx, req.Role)
-	if err != nil {
-		return err
-	}
-	if !r.IsRegisterPublic {
-		return ErrRegisterIsNotPublic
-	}
-
 	// name, email, phone is duplicate
-	_, err = au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
+	_, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
 	if err != gorm.ErrRecordNotFound {
 		return err
 	}
@@ -79,14 +69,6 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	}
 
 	return userInfo, tokenStr, nil
-}
-
-func (au *AuthUsecase) GetPermissions(ctx context.Context, req *pb.GetPermissionsRequest) ([]*user.Permission, error) {
-	userInfo, ok := ctx.Value("author").(user.User)
-	if !ok {
-		return nil, errors.New("get user from context.Context error ")
-	}
-	return userInfo.Permissions, nil
 }
 
 var (
