@@ -29,7 +29,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	case "mysql":
 		db, err = gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{})
 	default:
-		err = fmt.Errorf("unsupported database driver:", c.Database.Driver)
+		err = fmt.Errorf("unsupported database driver:%s", c.Database.Driver)
 	}
 	if err != nil {
 		return nil, nil, err

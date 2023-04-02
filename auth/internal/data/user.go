@@ -5,8 +5,8 @@ import (
 
 	"github.com/databonfire/bonfire/auth/internal/biz"
 	"github.com/databonfire/bonfire/auth/user"
+	"github.com/databonfire/bonfire/resource"
 	"github.com/go-kratos/kratos/v2/log"
-	"gorm.io/gorm"
 )
 
 type userRepo struct {
@@ -30,7 +30,7 @@ func (r *userRepo) Find(ctx context.Context, name, email, phone string) (*user.U
 	if data.OrganizationID == 0 {
 		return &data, nil
 	}
-	data.Organization = &user.Organization{Model: gorm.Model{ID: data.OrganizationID}}
+	data.Organization = &user.Organization{Model: resource.Model{ID: data.OrganizationID}}
 	return &data, r.data.db.First(data.Organization).Error
 }
 

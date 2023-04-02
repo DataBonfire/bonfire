@@ -40,7 +40,7 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 		},
 	}
 	resource.RegisterHTTPServer(srv, &resource.Option{
-		Resource:   "organizations",
+		Resource:   user.OrganizationResourceName,
 		Model:      &user.Organization{},
 		DataConfig: rdc,
 		Logger:     logger,

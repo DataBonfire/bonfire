@@ -20,11 +20,13 @@ type Option struct {
 	Logger              log.Logger
 }
 
-var resources = map[string]interface{}{
-	"users": &user.User{},
-	//"roles":         &user.Role{},
-	//"permissions":   &user.Permission{},
-	"organizations": &user.Organization{},
+func defaultResources() map[string]interface{} {
+	return map[string]interface{}{
+		"users": &user.User{},
+		//"roles":         &user.Role{},
+		//"permissions":   &user.Permission{},
+		user.OrganizationResourceName: &user.Organization{},
+	}
 }
 
 func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
@@ -52,7 +54,7 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 			Logger:     opt.Logger,
 		}))
 	}
-	for k, v := range resources {
+	for k, v := range defaultResources() {
 		//if _, ok := opt.Resources[k]; !ok {
 		//	continue
 		//}
