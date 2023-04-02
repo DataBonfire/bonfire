@@ -12,12 +12,13 @@ import (
 )
 
 type Option struct {
-	Resources           map[string]interface{}
-	DataConfig          *resource.DataConfig
-	JWTSecret           string
-	PasswordSalt        string
-	PublicRegisterRoles []string
-	Logger              log.Logger
+	Resources              map[string]interface{}
+	HTTPHandlerMiddlewares []resource.HTTPHandlerMiddleware
+	DataConfig             *resource.DataConfig
+	JWTSecret              string
+	PasswordSalt           string
+	PublicRegisterRoles    []string
+	Logger                 log.Logger
 }
 
 func defaultResources() map[string]interface{} {
@@ -48,10 +49,11 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	cleanups := []func(){cleanup}
 	for k, v := range opt.Resources {
 		cleanups = append(cleanups, resource.RegisterHTTPServer(srv, &resource.Option{
-			Resource:   k,
-			Model:      v,
-			DataConfig: opt.DataConfig,
-			Logger:     opt.Logger,
+			Resource:               k,
+			Model:                  v,
+			DataConfig:             opt.DataConfig,
+			Logger:                 opt.Logger,
+			HTTPHandlerMiddlewares: opt.HTTPHandlerMiddlewares,
 		}))
 	}
 	for k, v := range defaultResources() {

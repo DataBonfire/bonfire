@@ -12,6 +12,8 @@ import (
 	"gorm.io/gorm/schema"
 )
 
+type HTTPHandlerMiddleware func(http.HandlerFunc) http.HandlerFunc
+
 func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	// TODO add support multiple resource nest and string pid
 	if nested := strings.Split(opt.Resource, "."); len(nested) > 1 {
@@ -57,13 +59,20 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	}
 	pathPrefix += opt.Resource
 	r := srv.Route("/")
-	r.GET(pathPrefix, listHTTPHandler(svc))
-	r.GET(pathPrefix+"/{id}", showHTTPHandler(svc))
-	r.POST(pathPrefix, createHTTPHandler(svc))
-	r.POST(pathPrefix+"/{id}", updateHTTPHandler(svc))
-	r.DELETE(pathPrefix+"/{id}", deleteHTTPHandler(svc))
+	r.GET(pathPrefix, assembleHandler(listHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.GET(pathPrefix+"/{id}", assembleHandler(showHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.POST(pathPrefix, assembleHandler(createHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.POST(pathPrefix+"/{id}", assembleHandler(updateHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.DELETE(pathPrefix+"/{id}", assembleHandler(deleteHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
 
 	return cleanup
+}
+
+func assembleHandler(f http.HandlerFunc, mws []HTTPHandlerMiddleware) http.HandlerFunc {
+	for _, mw := range mws {
+		f = mw(f)
+	}
+	return f
 }
 
 func listHTTPHandler(svc *Service) func(ctx http.Context) error {
