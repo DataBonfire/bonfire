@@ -20,15 +20,17 @@ var publicPaths = []string{
 }
 
 type Option struct {
-	Secret           string
-	PublicPaths      []string
-	ResourceExtracts []*regexp.Regexp
+	Secret             string
+	PublicPaths        []string
+	ResourceExtracts   []*regexp.Regexp
+	SubordinatesFinder func(ctx context.Context, u *user.User) ([]uint, error)
 }
 
 type authMiddleware struct {
-	secret           string
-	publicPaths      []string
-	resourceExtracts []*regexp.Regexp
+	secret             string
+	publicPaths        []string
+	resourceExtracts   []*regexp.Regexp
+	subordinatesFinder func(ctx context.Context, u *user.User) ([]uint, error)
 }
 
 func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
@@ -57,7 +59,12 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 		if err = db.First(&u, userSession.UserId).Error; err != nil {
 			return nil, err
 		}
-		if err = db.Model(&user.User{}).Select("id").Where("manager_id", u.ID).Find(&u.Subordinates).Error; err != nil {
+		if m.subordinatesFinder != nil {
+			u.Subordinates, err = m.subordinatesFinder(ctx, &u)
+		} else {
+			err = db.Model(&user.User{}).Select("id").Where("manager_id", u.ID).Find(&u.Subordinates).Error
+		}
+		if err != nil {
 			return nil, err
 		}
 		return next(context.WithValue(ctx, "author", &u), req)
@@ -65,6 +72,6 @@ func (m *authMiddleware) Handle(next middleware.Handler) middleware.Handler {
 }
 
 func MakeAuthMiddleware(opt *Option) middleware.Middleware {
-	am := &authMiddleware{secret: opt.Secret, publicPaths: opt.PublicPaths}
+	am := &authMiddleware{secret: opt.Secret, publicPaths: opt.PublicPaths, subordinatesFinder: opt.SubordinatesFinder}
 	return (middleware.Middleware)(am.Handle)
 }

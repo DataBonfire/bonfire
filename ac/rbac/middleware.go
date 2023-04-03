@@ -11,7 +11,7 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
-func MakeACMiddleware(logger log.Logger) middleware.Middleware {
+func MakeMiddleware(logger log.Logger) middleware.Middleware {
 	rbac := newAC(nil, logger)
 	return func(next middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {

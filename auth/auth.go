@@ -78,9 +78,8 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	}
 }
 
-func MakeAuthMiddleware(secret string, publicPaths []string) middleware.Middleware {
-	return server.MakeAuthMiddleware(&server.Option{
-		Secret:      secret,
-		PublicPaths: publicPaths,
-	})
+type MiddlewareOption server.Option
+
+func MakeMiddleware(opt *MiddlewareOption) middleware.Middleware {
+	return server.MakeAuthMiddleware((*server.Option)(opt))
 }

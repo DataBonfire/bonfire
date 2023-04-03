@@ -7,6 +7,7 @@ replace github.com/json-iterator/go => github.com/databonfire/json v1.1.12
 go 1.19
 
 require (
+	github.com/envoyproxy/protoc-gen-validate v0.9.1
 	github.com/go-kratos/kratos/v2 v2.6.1
 	github.com/go-playground/validator/v10 v10.12.0
 	github.com/golang-jwt/jwt/v4 v4.4.1
