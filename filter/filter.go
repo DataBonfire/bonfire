@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gorm.io/gorm/schema"
 	"reflect"
 	"strconv"
-
-	"gorm.io/gorm/schema"
 )
 
 type Filter map[string]interface{}
@@ -70,44 +69,49 @@ func (f Filter) Value() (driver.Value, error) {
 // hasPermission(action, resource)
 
 func (f Filter) Match(record interface{}) bool {
-	recordeReflectType := reflect.TypeOf(record)
-
-	if recordeReflectType.Kind() == reflect.Pointer {
-		recordeReflectType = recordeReflectType.Elem()
+	recordReflectValue := reflect.ValueOf(record)
+	if recordReflectValue.Kind() == reflect.Pointer {
+		recordReflectValue = recordReflectValue.Elem()
 	}
-	// record 不是 reflect.Struct ，返回 false
-	if recordeReflectType.Kind() != reflect.Struct {
+	if recordReflectValue.Kind() != reflect.Struct {
 		return false
 	}
-	for i, n := 0, recordeReflectType.NumField(); i < n; i++ {
-		structFieldName := recordeReflectType.Field(i).Name
-		fieldName := schema.NamingStrategy{}.ColumnName("", structFieldName)
-		fv, ok := f[fieldName]
-		if !ok {
+
+	recordReflectType := reflect.TypeOf(record)
+	if recordReflectType.Kind() == reflect.Pointer {
+		recordReflectType = recordReflectType.Elem()
+	}
+
+	for i, n := 0, recordReflectValue.NumField(); i < n; i++ {
+		recordFieldReflectValue := recordReflectValue.Field(i)
+		recordFieldReflectType := recordReflectType.Field(i)
+		if recordFieldReflectValue.Kind() == reflect.Struct && recordFieldReflectType.Anonymous {
+			if f.Match(recordFieldReflectValue.Interface()) {
+				return true
+			}
 			continue
-		}
-		vf := reflect.ValueOf(record)
-		if vf.Kind() == reflect.Pointer {
-			vf = vf.Elem()
 		}
 
-		if vf.Kind() != reflect.Struct {
-			continue
-		}
-		// 目前只处理 uint
-		// 如 influencer_id 1
-		id, ok := reflectValueTConvert[uint](vf, structFieldName)
+		fieldName := schema.NamingStrategy{}.ColumnName("", recordFieldReflectType.Name)
+		filterFieldValue, ok := f[fieldName]
 		if !ok {
 			continue
 		}
-		rv := reflect.TypeOf(fv)
+
+		// 目前只处理 uint
+		// 如 influencer_id 1
+		id, ok := reflectValueTConvert[uint](recordFieldReflectValue)
+		if !ok {
+			continue
+		}
+		rv := reflect.TypeOf(filterFieldValue)
 		switch rv.Kind() {
 		case reflect.Slice, reflect.Array:
-			if isInSlice[uint](id, fv.([]uint)) {
+			if isInSlice[uint](id, filterFieldValue.([]uint)) {
 				return true
 			}
 		case reflect.Uint:
-			if id == fv {
+			if id == filterFieldValue {
 				return true
 			}
 		}
@@ -127,13 +131,12 @@ type Constraint struct {
 	Negate bool `json:"negate,omitempty"`
 }
 
-func reflectValueTConvert[T any](vf reflect.Value, name string) (T, bool) {
+func reflectValueTConvert[T any](vf reflect.Value) (T, bool) {
 	var data T
-	fieldByName := vf.FieldByName(name)
-	if !fieldByName.IsValid() || !fieldByName.CanInterface() {
+	if !vf.IsValid() || !vf.CanInterface() {
 		return data, false
 	}
-	data, ok := fieldByName.Interface().(T)
+	data, ok := vf.Interface().(T)
 	return data, ok
 }
 

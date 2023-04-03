@@ -74,11 +74,18 @@ func (ac *RBAC) Allow(a interface{}, act string, res string, re interface{}) boo
 			continue
 		}
 		for _, perm := range role.Permissions {
-			if contains(perm.Actions, act) && perm.Resource == res && // Find permission with specified action and resource
-				(re == nil || // Not record lvl
-					perm.Record == nil || // No record perm
-					applyAccessor(accessor, perm.Record).Match(re)) { // Check record lvl perm
+			if !contains(perm.Actions, act) || perm.Resource != res {
+				continue
+			}
 
+			// Not record lvl
+			// No record perm
+			if re == nil || perm.Record == nil {
+				return true
+			}
+
+			pa := applyAccessor(accessor, perm.Record)
+			if pa != nil && pa.Match(re) {
 				return true
 			}
 		}
@@ -96,16 +103,25 @@ func (ac *RBAC) Filters(a interface{}, act, res string) []filter.Filter {
 			continue
 		}
 		for _, perm := range role.Permissions {
-			if contains(perm.Actions, act) || perm.Resource != res {
+			if !contains(perm.Actions, act) || perm.Resource != res {
 				continue
 			}
+
 			// No record lvl perm which means public to the role
 			if perm.Record == nil {
 				return nil
 			}
-			filters = append(filters, applyAccessor(accessor, perm.Record))
+			v := applyAccessor(accessor, perm.Record)
+			if v == nil {
+				continue
+			}
+			filters = append(filters, v)
 		}
 	}
+	if len(filters) == 0 {
+		filters = append(filters, map[string]interface{}{"created_by": -1})
+	}
+
 	return filters
 }
 
@@ -146,6 +162,7 @@ func applyAccessor(a Accessor, f filter.Filter) filter.Filter {
 			groups := a.GetGroups()
 			switch len(groups) {
 			case 0:
+				return nil
 				filter[k] = -1 // No group which means filter invalid
 			case 1:
 				filter[k] = groups[0]
@@ -156,6 +173,7 @@ func applyAccessor(a Accessor, f filter.Filter) filter.Filter {
 			subs := a.GetSubordinates()
 			switch len(subs) {
 			case 0:
+				return nil
 				filter[k] = -1 // No sub which means filter invalid
 			case 1:
 				filter[k] = subs[0]

@@ -28,7 +28,11 @@ func GormFilter(db *gorm.DB, filters ...Filter) (*gorm.DB, error) {
 					constraintFilter(chains, constraint, fieldName)
 				}
 			default:
-				chains.Where(fmt.Sprintf("%s = ?", fieldName), v)
+				if v == -1 && fieldName == "created_by" {
+					chains.Where("FALSE")
+				} else {
+					chains.Where(fmt.Sprintf("%s = ?", fieldName), v)
+				}
 			}
 		}
 		groupDB.Or(chains)
