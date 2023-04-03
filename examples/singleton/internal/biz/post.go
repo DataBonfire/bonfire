@@ -12,7 +12,6 @@ type Post struct {
 	Content            string    `validate:"required" json:"content"`
 	Status             int       `json:"status" user:"-"`
 	PublishedAt        time.Time `json:"status"`
-	CreatedBy          uint      `gorm:"index"`
 	AdvertisingRevenue float64   `json:"-" admin:"advertising_revenue" editor_manager:"advertising_revenue" gorm:"advertising_revenue"`
 }
 

@@ -7,6 +7,5 @@ type Reply struct {
 	CommentID uint
 	PostID    uint
 
-	CreatedBy      uint `gorm:"index"`
 	OrganizationID uint `gorm:"index"`
 }

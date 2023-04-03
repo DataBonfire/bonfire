@@ -8,5 +8,5 @@ import (
 type Organization struct {
 	user.Organization
 	Industries resource.StringSlice
-	Address    string
+	Address    string `json:"-"`
 }

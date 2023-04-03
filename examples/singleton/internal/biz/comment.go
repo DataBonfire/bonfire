@@ -7,6 +7,5 @@ type Comment struct {
 	PostID  uint
 	Content string
 
-	CreatedBy      uint `gorm:"index"`
 	OrganizationID uint `gorm:"index"`
 }
