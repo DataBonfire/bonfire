@@ -66,10 +66,37 @@ components:
             description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
         LoginReply:
             type: object
-            properties: {}
+            properties:
+                token:
+                    type: string
+                name:
+                    type: string
+                avatar:
+                    type: string
+                roles:
+                    type: array
+                    items:
+                        type: string
+                organization:
+                    $ref: '#/components/schemas/Organization'
         LoginRequest:
             type: object
-            properties: {}
+            properties:
+                name:
+                    type: string
+                email:
+                    type: string
+                phone:
+                    type: string
+                password:
+                    type: string
+        Organization:
+            type: object
+            properties:
+                name:
+                    type: string
+                logo:
+                    type: string
         RegisterReply:
             type: object
             properties: {}
@@ -84,7 +111,7 @@ components:
                     type: string
                 password:
                     type: string
-                passwordRepeated:
+                role:
                     type: string
         Status:
             type: object

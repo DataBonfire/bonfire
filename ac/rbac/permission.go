@@ -6,10 +6,10 @@ import (
 )
 
 type Permission struct {
-	resource.Model
-	Actions  resource.StringSlice `json:"actions"`  // list,read,create,edit,delete,export,print
-	Resource string               `json:"resource"` // *, campaigns
-	Record   filter.Filter        `json:"record"`
+	resource.Model `json:"-"`
+	Actions        resource.StringSlice `json:"actions"`  // list,read,create,edit,delete,export,print
+	Resource       string               `json:"resource"` // *, campaigns
+	Record         filter.Filter        `json:"record,omitempty"`
 }
 
 // 1. me 2. org 3. 下属
