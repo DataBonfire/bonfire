@@ -69,8 +69,8 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 }
 
 func AssembleHandler(f http.HandlerFunc, mws []HTTPHandlerMiddleware) http.HandlerFunc {
-	for _, mw := range mws {
-		f = mw(f)
+	for i := len(mws) - 1; i >= 0; i-- {
+		f = mws[i](f)
 	}
 	return f
 }
