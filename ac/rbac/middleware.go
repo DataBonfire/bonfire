@@ -31,7 +31,7 @@ func MakeMiddleware(logger log.Logger) resource.HTTPHandlerMiddleware {
 			if res != "auth" && !rbac.Allow(a, act, res, nil) {
 				return ac.ErrPermissionDenied
 			}
-			return next(resource.ContextWithValue(ctx, "acer", rbac))
+			return next(&Context{resource.ContextWithValue(ctx, "acer", rbac)})
 		}
 	}
 }

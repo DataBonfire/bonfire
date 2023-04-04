@@ -74,10 +74,18 @@ var seeds = []interface{}{
 }
 
 func seedDB(db *gorm.DB) error {
+	db = db.Clauses(clause.OnConflict{
+		DoUpdates: []clause.Assignment{
+			{
+				Column: clause.Column{Name: "created_by"},
+				Value:  0,
+			},
+		},
+	})
 	db.AutoMigrate(&rbac.Role{})
 	for _, seed := range seeds {
 		db.AutoMigrate(seed)
-		if err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(seed).Error; err != nil {
+		if err := db.Create(seed).Error; err != nil {
 			return err
 		}
 	}

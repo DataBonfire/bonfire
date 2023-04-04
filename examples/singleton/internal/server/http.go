@@ -55,7 +55,6 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 					Secret: bc.Jwtsecret,
 				}),
 				rbac.MakeMiddleware(logger),
-				rbac.EnhanceContext,
 			},
 			DataConfig:          rdc,
 			JWTSecret:           bc.Jwtsecret,
@@ -63,7 +62,12 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 			PublicRegisterRoles: []string{"editor"},
 			Logger:              logger,
 		})
-		rbac.RegisterHTTPServer(srv)
+		rbac.RegisterHTTPServer(srv, []resource.HTTPHandlerMiddleware{
+			auth.MakeMiddleware(&auth.MiddlewareOption{
+				Secret: bc.Jwtsecret,
+			}),
+			rbac.MakeMiddleware(logger),
+		})
 		//resource.RegisterHTTPServer(srv, &resource.Option{
 		//	Resource:   "posts",
 		//	Model:      &biz.Post{},

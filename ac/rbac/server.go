@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/databonfire/bonfire/ac"
+	"github.com/databonfire/bonfire/resource"
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
-func RegisterHTTPServer(srv *http.Server) {
+func RegisterHTTPServer(srv *http.Server, mws []resource.HTTPHandlerMiddleware) {
 	r := srv.Route("/")
-	r.GET("/auth/permissions", getPermissionsHTTPHandler)
+	r.GET("/auth/permissions", resource.AssembleHandler(getPermissionsHTTPHandler, mws))
 }
 
 func getPermissionsHTTPHandler(ctx http.Context) error {

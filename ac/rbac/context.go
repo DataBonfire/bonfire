@@ -7,16 +7,9 @@ import (
 	stdhttp "net/http"
 	"strings"
 
-	"github.com/databonfire/bonfire/resource"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
-
-var EnhanceContext = (resource.HTTPHandlerMiddleware)(func(next http.HandlerFunc) http.HandlerFunc {
-	return func(ctx http.Context) error {
-		return next(&Context{ctx})
-	}
-})
 
 type Context struct {
 	http.Context
