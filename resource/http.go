@@ -222,6 +222,7 @@ func updateHTTPHandler(svc *Service) func(ctx http.Context) error {
 			if err = validate.Struct(record); err != nil {
 				return nil, err
 			}
+			reflect.ValueOf(record).Elem().FieldByName("ID").Set(reflect.ValueOf(r.ID))
 			return record, svc.repo.Save(stdctx, record)
 		})(ctx, r)
 		if err != nil {
