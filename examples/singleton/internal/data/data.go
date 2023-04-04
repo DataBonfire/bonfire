@@ -55,15 +55,15 @@ var (
 			ActionsAll: []string{"posts"},
 		},
 		{
-			Type:                  "user",
-			Name:                  "editor_manager",
-			ActionsMyCreated:      []string{"posts.created_by"},
-			ActionsMySubordinates: []string{"posts.created_by"},
+			Type:                "user",
+			Name:                "editor_manager",
+			ActionsUID:          []string{"posts.created_by"},
+			ActionsSubordinates: []string{"posts.created_by"},
 		},
 		{
-			Type:             "user",
-			Name:             "editor",
-			ActionsMyCreated: []string{"posts.created_by"},
+			Type:       "user",
+			Name:       "editor",
+			ActionsUID: []string{"posts.created_by"},
 		},
 	}
 	seeds = []interface{}{
