@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"reflect"
 	"sync"
 
@@ -29,7 +30,7 @@ func NewData(c *DataConfig, logger log.Logger) (*Data, func(), error) {
 	)
 	switch c.Database.Driver {
 	case "mysql":
-		db, err = gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{})
+		db, err = gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{FullSaveAssociations: true})
 	default:
 		err = fmt.Errorf("unsupported database driver:%s", c.Database.Driver)
 	}
@@ -81,7 +82,7 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 		data  = reflect.New(reflect.MakeSlice(reflect.SliceOf(r.modelType), 0, 0).Type())
 		//errs  = make(chan error, 1)
 	)
-	rootDB := r.data.db.WithContext(ctx)
+	rootDB := r.data.db.WithContext(ctx).Preload(clause.Associations)
 	db, err := filter.GormFilter(rootDB, lr.Filter)
 	if err != nil {
 		return nil, 0, err
@@ -133,7 +134,7 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 
 func (r *repo) Find(ctx context.Context, id uint) (interface{}, error) {
 	dest := reflect.New(r.modelType)
-	tx := r.data.db.First(dest.Interface(), id)
+	tx := r.data.db.Preload(clause.Associations).First(dest.Interface(), id)
 	return dest.Elem().Interface(), tx.Error
 }
 
