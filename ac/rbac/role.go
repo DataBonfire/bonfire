@@ -1,6 +1,8 @@
 package rbac
 
 import (
+	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/databonfire/bonfire/resource"
@@ -18,81 +20,101 @@ type RoleTemplate struct {
 	Name string
 	Type string
 
-	ActionsAll            []string
-	ActionsMyCreated      []string
-	ActionsMySubordinates []string
-	ActionsMyCompany      []string
+	ActionsAll          []string
+	ActionsUID          []string
+	ActionsSubordinates []string
+	ActionsCompany      []string
 
-	BrowseAll            []string
-	BrowseMyCreated      []string
-	BrowseMySubordinates []string
-	BrowseMyCompany      []string
+	BrowseAll          []string
+	BrowseUID          []string
+	BrowseSubordinates []string
+	BrowseCompany      []string
 
-	ShowAll            []string
-	ShowMyCreated      []string
-	ShowMySubordinates []string
-	ShowMyCompany      []string
+	ShowAll          []string
+	ShowUID          []string
+	ShowSubordinates []string
+	ShowCompany      []string
 
 	Create []string
 
-	EditAll            []string
-	EditMyCreated      []string
-	EditMySubordinates []string
-	EditMyCompany      []string
+	EditAll          []string
+	EditUID          []string
+	EditSubordinates []string
+	EditCompany      []string
 
-	DeleteAll            []string
-	DeleteMyCreated      []string
-	DeleteMySubordinates []string
-	DeleteMyCompany      []string
+	DeleteAll          []string
+	DeleteUID          []string
+	DeleteSubordinates []string
+	DeleteCompany      []string
 
 	//AdditionalPermissions []*Permission
 }
 
-func MakeRoles(tpls ...*RoleTemplate) []*Role {
-	var roles []*Role
+func MakeRoles(tpls []*RoleTemplate) []*Role {
+	var (
+		roles      []*Role
+		perms      = map[string]uint{}
+		bindPermID = func(perm *Permission) *Permission {
+			var buf bytes.Buffer
+			buf.WriteString(perm.Resource)
+			buf.WriteString(strings.Join(perm.Actions, ","))
+			for k, v := range perm.Record {
+				buf.WriteString(fmt.Sprintf("%s=%v", k, v))
+			}
+			key := buf.String()
+			id := perms[key]
+			if id == 0 {
+				id = uint(len(perms) + 1)
+				perms[key] = id
+			}
+			perm.ID = id
+			return perm
+		}
+	)
+
 	for _, t := range tpls {
 		var perms []*Permission
 		for _, res := range t.ActionsAll {
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
-			})
+			}))
 		}
-		for _, assoicRes := range t.ActionsMyCreated {
+		for _, assoicRes := range t.ActionsUID {
 			v := strings.Split(assoicRes, ".")
 			if len(v) != 2 {
 				panic("unexcepted resource or associated field")
 			}
 			res, assoic := v[0], v[1]
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
 				Record:   map[string]interface{}{assoic: "U"},
-			})
+			}))
 		}
-		for _, assoicRes := range t.ActionsMySubordinates {
+		for _, assoicRes := range t.ActionsSubordinates {
 			v := strings.Split(assoicRes, ".")
 			if len(v) != 2 {
 				panic("unexcepted resource or associated field")
 			}
 			res, assoic := v[0], v[1]
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
 				Record:   map[string]interface{}{assoic: "S"},
-			})
+			}))
 		}
-		for _, assoicRes := range t.ActionsMyCompany {
+		for _, assoicRes := range t.ActionsCompany {
 			v := strings.Split(assoicRes, ".")
 			if len(v) != 2 {
 				panic("unexcepted resource or associated field")
 			}
 			res, assoic := v[0], v[1]
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
 				Record:   map[string]interface{}{assoic: "C"},
-			})
+			}))
 		}
 		for _, res := range t.BrowseAll {
 			var perm Permission
@@ -111,9 +133,9 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
-		for _, assoicRes := range t.BrowseMyCreated {
+		for _, assoicRes := range t.BrowseUID {
 			var perm Permission
 			v := strings.Split(assoicRes, ".")
 			if len(v) != 2 {
@@ -123,19 +145,19 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 			perm.Resource = res
 			perm.Record = map[string]interface{}{assoic: "U"}
 			perm.Actions = append(perm.Actions, "browse")
-			if contains(t.ShowMyCreated, assoicRes) || contains(t.ShowMyCreated, res) {
+			if contains(t.ShowUID, assoicRes) || contains(t.ShowUID, res) {
 				perm.Actions = append(perm.Actions, "show")
 			}
-			if contains(t.EditMyCreated, assoicRes) || contains(t.EditMyCreated, res) {
+			if contains(t.EditUID, assoicRes) || contains(t.EditUID, res) {
 				perm.Actions = append(perm.Actions, "edit")
 			}
-			if contains(t.DeleteMyCreated, assoicRes) || contains(t.DeleteMyCreated, res) {
+			if contains(t.DeleteUID, assoicRes) || contains(t.DeleteUID, res) {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
-		for _, assoicRes := range t.BrowseMySubordinates {
+		for _, assoicRes := range t.BrowseSubordinates {
 			var perm Permission
 			v := strings.Split(assoicRes, ".")
 			if len(v) != 2 {
@@ -145,19 +167,19 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 			perm.Resource = res
 			perm.Record = map[string]interface{}{assoic: "B"}
 			perm.Actions = append(perm.Actions, "browse")
-			if contains(t.ShowMySubordinates, assoicRes) || contains(t.ShowMySubordinates, res) {
+			if contains(t.ShowSubordinates, assoicRes) || contains(t.ShowSubordinates, res) {
 				perm.Actions = append(perm.Actions, "show")
 			}
-			if contains(t.EditMySubordinates, assoicRes) || contains(t.EditMySubordinates, res) {
+			if contains(t.EditSubordinates, assoicRes) || contains(t.EditSubordinates, res) {
 				perm.Actions = append(perm.Actions, "edit")
 			}
-			if contains(t.DeleteMySubordinates, assoicRes) || contains(t.DeleteMySubordinates, res) {
+			if contains(t.DeleteSubordinates, assoicRes) || contains(t.DeleteSubordinates, res) {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
-		for _, assoicRes := range t.BrowseMyCompany {
+		for _, assoicRes := range t.BrowseCompany {
 			var perm Permission
 			v := strings.Split(assoicRes, ".")
 			if len(v) != 2 {
@@ -167,20 +189,23 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 			perm.Resource = res
 			perm.Record = map[string]interface{}{assoic: "C"}
 			perm.Actions = append(perm.Actions, "browse")
-			if contains(t.ShowMyCompany, assoicRes) || contains(t.ShowMyCompany, res) {
+			if contains(t.ShowCompany, assoicRes) || contains(t.ShowCompany, res) {
 				perm.Actions = append(perm.Actions, "show")
 			}
-			if contains(t.EditMyCompany, assoicRes) || contains(t.EditMyCompany, res) {
+			if contains(t.EditCompany, assoicRes) || contains(t.EditCompany, res) {
 				perm.Actions = append(perm.Actions, "edit")
 			}
-			if contains(t.DeleteMyCompany, assoicRes) || contains(t.DeleteMyCompany, res) {
+			if contains(t.DeleteCompany, assoicRes) || contains(t.DeleteCompany, res) {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
 
 		roles = append(roles, &Role{
+			Model: resource.Model{
+				ID: uint(len(roles) + 1),
+			},
 			Name:        t.Name,
 			Type:        t.Type,
 			Permissions: perms,
