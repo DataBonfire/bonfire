@@ -1,6 +1,8 @@
 package rbac
 
 import (
+	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/databonfire/bonfire/resource"
@@ -48,15 +50,35 @@ type RoleTemplate struct {
 	//AdditionalPermissions []*Permission
 }
 
-func MakeRoles(tpls ...*RoleTemplate) []*Role {
-	var roles []*Role
+func MakeRoles(tpls []*RoleTemplate) []*Role {
+	var (
+		roles      []*Role
+		perms      = map[string]uint{}
+		bindPermID = func(perm *Permission) *Permission {
+			var buf bytes.Buffer
+			buf.WriteString(perm.Resource)
+			buf.WriteString(strings.Join(perm.Actions, ","))
+			for k, v := range perm.Record {
+				buf.WriteString(fmt.Sprintf("%s=%v", k, v))
+			}
+			key := buf.String()
+			id := perms[key]
+			if id == 0 {
+				id = uint(len(perms) + 1)
+				perms[key] = id
+			}
+			perm.ID = id
+			return perm
+		}
+	)
+
 	for _, t := range tpls {
 		var perms []*Permission
 		for _, res := range t.ActionsAll {
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
-			})
+			}))
 		}
 		for _, assoicRes := range t.ActionsMyCreated {
 			v := strings.Split(assoicRes, ".")
@@ -64,11 +86,11 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				panic("unexcepted resource or associated field")
 			}
 			res, assoic := v[0], v[1]
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
 				Record:   map[string]interface{}{assoic: "U"},
-			})
+			}))
 		}
 		for _, assoicRes := range t.ActionsMySubordinates {
 			v := strings.Split(assoicRes, ".")
@@ -76,11 +98,11 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				panic("unexcepted resource or associated field")
 			}
 			res, assoic := v[0], v[1]
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
 				Record:   map[string]interface{}{assoic: "S"},
-			})
+			}))
 		}
 		for _, assoicRes := range t.ActionsMyCompany {
 			v := strings.Split(assoicRes, ".")
@@ -88,11 +110,11 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				panic("unexcepted resource or associated field")
 			}
 			res, assoic := v[0], v[1]
-			perms = append(perms, &Permission{
+			perms = append(perms, bindPermID(&Permission{
 				Resource: res,
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
 				Record:   map[string]interface{}{assoic: "C"},
-			})
+			}))
 		}
 		for _, res := range t.BrowseAll {
 			var perm Permission
@@ -111,7 +133,7 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
 		for _, assoicRes := range t.BrowseMyCreated {
 			var perm Permission
@@ -133,7 +155,7 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
 		for _, assoicRes := range t.BrowseMySubordinates {
 			var perm Permission
@@ -155,7 +177,7 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
 		for _, assoicRes := range t.BrowseMyCompany {
 			var perm Permission
@@ -177,10 +199,13 @@ func MakeRoles(tpls ...*RoleTemplate) []*Role {
 				perm.Actions = append(perm.Actions, "delete")
 			}
 
-			perms = append(perms, &perm)
+			perms = append(perms, bindPermID(&perm))
 		}
 
 		roles = append(roles, &Role{
+			Model: resource.Model{
+				ID: uint(len(roles) + 1),
+			},
 			Name:        t.Name,
 			Type:        t.Type,
 			Permissions: perms,
