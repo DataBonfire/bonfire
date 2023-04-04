@@ -9,6 +9,7 @@ import (
 	"github.com/databonfire/bonfire/resource"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
@@ -56,27 +57,27 @@ var perms = []*rbac.Permission{
 	{Model: resource.Model{ID: 4}, Actions: resource.StringSlice{"create", "edit", "delete"}, Resource: "posts", Record: filter.Filter{"created_by": "U"}},
 }
 var seeds = []interface{}{
-	[]*rbac.Role{
-		{Model: resource.Model{ID: 1}, Name: "editor", Type: "user", Permissions: []*rbac.Permission{
-			perms[0],
-			perms[3],
-		}},
-		{Model: resource.Model{ID: 2}, Name: "editor_manager", Type: "user", Permissions: []*rbac.Permission{
-			perms[0],
-			perms[2],
-			perms[3],
-		}},
-		{Model: resource.Model{ID: 3}, Name: "admin", Type: "admin", Permissions: []*rbac.Permission{
-			perms[0],
-			perms[1],
-		}},
-	},
+	rbac.MakeRoles(&rbac.RoleTemplate{
+		Type:       "admin",
+		Name:       "admin",
+		ActionsAll: []string{"posts"},
+	}, &rbac.RoleTemplate{
+		Type:                  "user",
+		Name:                  "editor_manager",
+		ActionsMyCreated:      []string{"posts.created_by"},
+		ActionsMySubordinates: []string{"posts.created_by"},
+	}, &rbac.RoleTemplate{
+		Type:             "user",
+		Name:             "editor",
+		ActionsMyCreated: []string{"posts.created_by"},
+	}),
 }
 
 func seedDB(db *gorm.DB) error {
+	db.AutoMigrate(&rbac.Role{})
 	for _, seed := range seeds {
 		db.AutoMigrate(seed)
-		if err := db.Save(seed).Error; err != nil {
+		if err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(seed).Error; err != nil {
 			return err
 		}
 	}

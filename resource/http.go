@@ -59,16 +59,16 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	}
 	pathPrefix += opt.Resource
 	r := srv.Route("/")
-	r.GET(pathPrefix, assembleHandler(listHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
-	r.GET(pathPrefix+"/{id}", assembleHandler(showHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
-	r.POST(pathPrefix, assembleHandler(createHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
-	r.POST(pathPrefix+"/{id}", assembleHandler(updateHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
-	r.DELETE(pathPrefix+"/{id}", assembleHandler(deleteHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.GET(pathPrefix, AssembleHandler(listHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.GET(pathPrefix+"/{id}", AssembleHandler(showHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.POST(pathPrefix, AssembleHandler(createHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.POST(pathPrefix+"/{id}", AssembleHandler(updateHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.DELETE(pathPrefix+"/{id}", AssembleHandler(deleteHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
 
 	return cleanup
 }
 
-func assembleHandler(f http.HandlerFunc, mws []HTTPHandlerMiddleware) http.HandlerFunc {
+func AssembleHandler(f http.HandlerFunc, mws []HTTPHandlerMiddleware) http.HandlerFunc {
 	for _, mw := range mws {
 		f = mw(f)
 	}

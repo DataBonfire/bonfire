@@ -3,11 +3,12 @@ package biz
 import (
 	"time"
 
+	"github.com/databonfire/bonfire/resource"
 	"gorm.io/gorm"
 )
 
 type Post struct {
-	gorm.Model
+	resource.Model
 	Title              string    `validate:"required" json:"title"`
 	Content            string    `validate:"required" json:"content"`
 	Status             int       `json:"status" user:"-"`

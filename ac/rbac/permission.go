@@ -7,9 +7,9 @@ import (
 
 type Permission struct {
 	resource.Model `json:"-"`
-	Actions        resource.StringSlice `json:"actions"`  // list,read,create,edit,delete,export,print
-	Resource       string               `json:"resource"` // *, campaigns
-	Record         filter.Filter        `json:"record,omitempty"`
+	Actions        resource.StringSlice `json:"actions" gorm:"type:varchar(60);uniqueIndex:idx_permissions_arr"`  // list,read,create,edit,delete,export,print
+	Resource       string               `json:"resource" gorm:"type:varchar(60);uniqueIndex:idx_permissions_arr"` // *, campaigns
+	Record         filter.Filter        `json:"record,omitempty" gorm:"type:varchar(255);uniqueIndex:idx_permissions_arr"`
 }
 
 // 1. me 2. org 3. 下属

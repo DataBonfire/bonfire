@@ -17,21 +17,25 @@ type RBAC struct {
 	logger        *log.Helper
 }
 
+var rbac *RBAC
+
 func newAC(repo resource.Repo, logger log.Logger) ac.AccessController {
-	rbac := &RBAC{
-		repo:   repo,
-		logger: log.NewHelper(logger),
-	}
-	go func() {
-		if err := rbac.refreshRegister(); err != nil {
-			panic(err)
+	if rbac == nil {
+		rbac = &RBAC{
+			repo:   repo,
+			logger: log.NewHelper(logger),
 		}
-		for range time.Tick(time.Minute * 5) {
+		go func() {
 			if err := rbac.refreshRegister(); err != nil {
-				rbac.logger.Error(err)
+				panic(err)
 			}
-		}
-	}()
+			for range time.Tick(time.Minute * 5) {
+				if err := rbac.refreshRegister(); err != nil {
+					rbac.logger.Error(err)
+				}
+			}
+		}()
+	}
 	return rbac
 }
 

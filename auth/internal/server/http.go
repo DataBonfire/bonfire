@@ -18,9 +18,6 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 		http.Middleware(
 			recovery.Recovery(),
 			resource.Validator(),
-			MakeAuthMiddleware(&Option{
-				Secret: bc.Jwtsecret,
-			}),
 		),
 	}
 	if c.Http.Network != "" {
@@ -41,14 +38,24 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 		},
 	}
 	resource.RegisterHTTPServer(srv, &resource.Option{
-		Resource:   user.OrganizationResourceName,
-		Model:      &user.Organization{},
+		Resource: user.OrganizationResourceName,
+		Model:    &user.Organization{},
+		HTTPHandlerMiddlewares: []resource.HTTPHandlerMiddleware{
+			MakeAuthMiddleware(&Option{
+				Secret: bc.Jwtsecret,
+			}),
+		},
 		DataConfig: rdc,
 		Logger:     logger,
 	})
 	resource.RegisterHTTPServer(srv, &resource.Option{
-		Resource:   "users",
-		Model:      &user.User{},
+		Resource: "users",
+		Model:    &user.User{},
+		HTTPHandlerMiddlewares: []resource.HTTPHandlerMiddleware{
+			MakeAuthMiddleware(&Option{
+				Secret: bc.Jwtsecret,
+			}),
+		},
 		DataConfig: rdc,
 		Logger:     logger,
 	})

@@ -7,7 +7,6 @@ import (
 	"github.com/databonfire/bonfire/auth/user"
 	"github.com/databonfire/bonfire/resource"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
@@ -80,6 +79,6 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 
 type MiddlewareOption server.Option
 
-func MakeMiddleware(opt *MiddlewareOption) middleware.Middleware {
+func MakeMiddleware(opt *MiddlewareOption) resource.HTTPHandlerMiddleware {
 	return server.MakeAuthMiddleware((*server.Option)(opt))
 }

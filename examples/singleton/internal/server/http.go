@@ -20,10 +20,6 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 		http.Middleware(
 			recovery.Recovery(),
 			resource.Validator(),
-			auth.MakeMiddleware(&auth.MiddlewareOption{
-				Secret: bc.Jwtsecret,
-			}),
-			rbac.MakeMiddleware(logger),
 		),
 	}
 	if c.Http.Network != "" {
@@ -54,12 +50,18 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 				"posts.comments": &biz.Comment{},
 				//"posts.comments.replies": &biz.Reply{},
 			},
-			HTTPHandlerMiddlewares: []resource.HTTPHandlerMiddleware{rbac.EnhanceContext},
-			DataConfig:             rdc,
-			JWTSecret:              bc.Jwtsecret,
-			PasswordSalt:           bc.PasswordSalt,
-			PublicRegisterRoles:    []string{"editor"},
-			Logger:                 logger,
+			HTTPHandlerMiddlewares: []resource.HTTPHandlerMiddleware{
+				auth.MakeMiddleware(&auth.MiddlewareOption{
+					Secret: bc.Jwtsecret,
+				}),
+				rbac.MakeMiddleware(logger),
+				rbac.EnhanceContext,
+			},
+			DataConfig:          rdc,
+			JWTSecret:           bc.Jwtsecret,
+			PasswordSalt:        bc.PasswordSalt,
+			PublicRegisterRoles: []string{"editor"},
+			Logger:              logger,
 		})
 		rbac.RegisterHTTPServer(srv)
 		//resource.RegisterHTTPServer(srv, &resource.Option{
