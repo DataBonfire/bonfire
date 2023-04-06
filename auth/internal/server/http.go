@@ -19,6 +19,7 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 			recovery.Recovery(),
 			resource.Validator(),
 		),
+		http.Filter(resource.MakeCors()),
 	}
 	if c.Http.Network != "" {
 		opts = append(opts, http.Network(c.Http.Network))

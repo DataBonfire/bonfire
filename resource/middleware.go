@@ -2,8 +2,11 @@ package resource
 
 import (
 	"context"
+	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/gorilla/handlers"
 
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -14,6 +17,16 @@ var StorageMiddleware = func(next middleware.Handler) middleware.Handler {
 		ctx = context.WithValue(ctx, "storage", storage)
 		return next(ctx, req)
 	})
+}
+
+func MakeCors() func(http.Handler) http.Handler {
+	return handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"POST", "GET", "OPTIONS", "PUT", "DELETE", "UPDATE"}),
+		handlers.AllowedHeaders([]string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"}),
+		handlers.ExposedHeaders([]string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Cache-Control", "Content-Language", "Content-Type"}),
+		handlers.AllowCredentials(),
+	)
 }
 
 type pbvalidator interface {
