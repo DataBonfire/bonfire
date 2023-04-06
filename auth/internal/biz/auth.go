@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 
+	kerrors "github.com/go-kratos/kratos/v2/errors"
+	"gorm.io/gorm"
+
 	pb "github.com/databonfire/bonfire/auth/api/v1"
 	"github.com/databonfire/bonfire/auth/internal/conf"
 	"github.com/databonfire/bonfire/auth/internal/utils"
 	"github.com/databonfire/bonfire/auth/user"
-	"gorm.io/gorm"
 )
 
 type AuthUsecase struct {
@@ -25,12 +27,23 @@ func NewAuthUsecase(c *conf.Biz, userRepo UserRepo) *AuthUsecase {
 
 func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) error {
 	// name, email, phone is duplicate
-	_, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
-	if err != gorm.ErrRecordNotFound {
+	_u, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
 	if err == nil {
-		return ErrAccountDuplicate
+		errMsg := make(map[string]string)
+		if _u.Name == req.Name {
+			errMsg["name"] = "name is duplicate"
+		}
+		if _u.Phone == req.Phone {
+			errMsg["phone"] = "phone is duplicate"
+		}
+		if _u.Email == req.Email {
+			errMsg["email"] = "email is duplicate"
+		}
+
+		return kerrors.BadRequest("account duplicate", "").WithMetadata(errMsg)
 	}
 
 	userInfo := &user.User{
