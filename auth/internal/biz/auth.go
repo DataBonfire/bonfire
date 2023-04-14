@@ -26,20 +26,30 @@ func NewAuthUsecase(c *conf.Biz, userRepo UserRepo) *AuthUsecase {
 }
 
 func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) error {
-	// name, email, phone is duplicate
+	if len(req.Phone) == 0 && len(req.Email) == 0 {
+		// Phone and email cannot both be empty
+		errMsg := map[string]string{
+			"email": "email is empty",
+			"phone": "phone is empty",
+		}
+		return kerrors.BadRequest("phone and email cannot both be empty", "").WithMetadata(errMsg)
+	}
+
 	_u, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
+	
+	// name, email, phone is duplicate
 	if err == nil {
 		errMsg := make(map[string]string)
-		if _u.Name == req.Name {
+		if len(_u.Name) != 0 && _u.Name == req.Name {
 			errMsg["name"] = "name is duplicate"
 		}
-		if _u.Phone == req.Phone {
+		if len(_u.Phone) != 0 && _u.Phone == req.Phone {
 			errMsg["phone"] = "phone is duplicate"
 		}
-		if _u.Email == req.Email {
+		if len(_u.Email) != 0 && _u.Email == req.Email {
 			errMsg["email"] = "email is duplicate"
 		}
 

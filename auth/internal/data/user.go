@@ -2,6 +2,9 @@ package data
 
 import (
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
 
 	"github.com/databonfire/bonfire/auth/internal/biz"
 	"github.com/databonfire/bonfire/auth/user"
@@ -23,10 +26,28 @@ func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
 
 func (r *userRepo) Find(ctx context.Context, name, email, phone string) (*user.User, error) {
 	var data user.User
-	//return &data, r.data.db.WithContext(ctx).Preload("Organization").First(&data, "name = ? OR email = ? OR phone = ?", name, email, phone).Error
-	if tx := r.data.db.WithContext(ctx).First(&data, "name = ? OR email = ? OR phone = ?", name, email, phone); tx.Error != nil {
-		return nil, tx.Error
+	if len(name) == 0 && len(email) == 0 && len(phone) == 0 {
+		return nil, errors.New("all params is empty")
 	}
+
+	chains := r.data.db.Debug().WithContext(ctx).Where("")
+	if len(name) != 0 {
+		chains.Where("name = ?", name)
+	}
+	if len(email) != 0 {
+		chains.Where("email = ?", email)
+	}
+	if len(phone) != 0 {
+		chains.Where("phone = ?", phone)
+	}
+
+	if err := chains.Limit(1).Find(&data).Error; err != nil {
+		return nil, err
+	}
+	if data.ID <= 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
 	if data.OrganizationID == 0 {
 		return &data, nil
 	}
