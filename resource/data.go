@@ -3,9 +3,10 @@ package resource
 import (
 	"context"
 	"fmt"
-	"gorm.io/gorm/clause"
 	"reflect"
 	"sync"
+
+	"gorm.io/gorm/clause"
 
 	"github.com/databonfire/bonfire/ac"
 	"github.com/databonfire/bonfire/filter"
@@ -96,7 +97,7 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 			db.Where(acDB)
 		}
 	}
-	if err = db.Model(r.model).Count(&total).Offset(int(lr.Paged * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
+	if err = db.Model(r.model).Count(&total).Offset(int((lr.Paged - 1) * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
 		return nil, 0, err
 	}
 

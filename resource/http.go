@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"strings"
@@ -78,9 +79,17 @@ func AssembleHandler(f http.HandlerFunc, mws []HTTPHandlerMiddleware) http.Handl
 func listHTTPHandler(svc *Service) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var lr ListRequest
-		if err := ctx.Bind(&lr); err != nil {
+		if err := ctx.BindQuery(&lr); err != nil {
 			return err
 		}
+		if lr.FilterJsonlized != "" {
+			if err := json.Unmarshal([]byte(lr.FilterJsonlized), &lr.Filter); err != nil {
+				return err
+			}
+		}
+		//if err := ctx.Bind(&lr); err != nil {
+		//	return err
+		//}
 
 		reply, err := ctx.Middleware(func(stdctx context.Context, req interface{}) (interface{}, error) {
 			// Parent access control
