@@ -17,23 +17,23 @@ type Context struct {
 
 func (c *Context) Bind(v interface{}) error {
 	r := c.Context.Request()
-	if contentSubtype(r.Header.Get("Content-Type")) == "json" {
-		data, err := io.ReadAll(r.Body)
+	//if contentSubtype(r.Header.Get("Content-Type")) == "json" {
+	data, err := io.ReadAll(r.Body)
 
-		// reset body.
-		r.Body = io.NopCloser(bytes.NewBuffer(data))
+	// reset body.
+	r.Body = io.NopCloser(bytes.NewBuffer(data))
 
-		if err != nil {
-			return errors.BadRequest("CODEC", err.Error())
-		}
-		if len(data) == 0 {
-			return nil
-		}
-
-		a := accessorOrVisitor(c.Value("author"))
-		return ((codec)(append([]string{a.GetRoleType()}, a.GetRoles()...))).Unmarshal(data, v)
+	if err != nil {
+		return errors.BadRequest("CODEC", err.Error())
 	}
-	return ErrUnsupportContentType
+	if len(data) == 0 {
+		return nil
+	}
+
+	a := accessorOrVisitor(c.Value("author"))
+	return ((codec)(append([]string{a.GetRoleType()}, a.GetRoles()...))).Unmarshal(data, v)
+	//}
+	//return ErrUnsupportContentType
 	//return c.Context.Bind(v)
 }
 
