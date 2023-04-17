@@ -83,7 +83,7 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 		data  = reflect.New(reflect.MakeSlice(reflect.SliceOf(r.modelType), 0, 0).Type())
 		//errs  = make(chan error, 1)
 	)
-	rootDB := r.data.db.WithContext(ctx).Preload(clause.Associations)
+	rootDB := r.data.db.WithContext(ctx)
 	db, err := filter.GormFilter(rootDB, lr.Filter)
 	if err != nil {
 		return nil, 0, err
@@ -97,7 +97,7 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 			db.Where(acDB)
 		}
 	}
-	if err = db.Model(r.model).Count(&total).Offset(int((lr.Paged - 1) * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
+	if err = db.Preload(clause.Associations).Model(r.model).Count(&total).Offset(int((lr.Paged - 1) * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
 		return nil, 0, err
 	}
 
