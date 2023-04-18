@@ -64,6 +64,7 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	r.GET(pathPrefix+"/{id}", AssembleHandler(showHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
 	r.POST(pathPrefix, AssembleHandler(createHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
 	r.POST(pathPrefix+"/{id}", AssembleHandler(updateHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
+	r.PUT(pathPrefix+"/{id}", AssembleHandler(updateHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
 	r.DELETE(pathPrefix+"/{id}", AssembleHandler(deleteHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
 
 	return cleanup
