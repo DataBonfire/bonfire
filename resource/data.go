@@ -97,6 +97,12 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 			db.Where(acDB)
 		}
 	}
+	if len(lr.Sort) > 0 && len(lr.Order) > 0 {
+		db, err = filter.GormOrder(db, lr.Sort, lr.Order)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
 	if err = db.Preload(clause.Associations).Model(r.model).Count(&total).Offset(int((lr.Paged - 1) * lr.PerPage)).Limit(int(lr.PerPage)).Find(data.Interface()).Error; err != nil {
 		return nil, 0, err
 	}

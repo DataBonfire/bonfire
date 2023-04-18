@@ -8,7 +8,9 @@ type (
 		Filter          filter.Filter `json:"filter"`
 		PerPage         int64         `json:"per_page"`
 		Paged           int64         `json:"paged"`
-		Sorts           []*Sort       `json:"sorts"`
+		//Sorts           []*Sort       `json:"sorts"`
+		Sort  string `json:"sort"`
+		Order string `json:"order"`
 	}
 
 	Sort struct {

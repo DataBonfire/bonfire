@@ -1,11 +1,22 @@
 package filter
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"gorm.io/gorm"
 )
+
+func GormOrder(db *gorm.DB, field, order string) (*gorm.DB, error) {
+	order = strings.ToUpper(order)
+	if order != "DESC" && order != "ASC" {
+		return nil, errors.New("order error")
+	}
+
+	return db.Order(fmt.Sprintf("%s %v", field, order)), nil
+}
 
 func GormFilter(db *gorm.DB, filters ...Filter) (*gorm.DB, error) {
 	groupDB := db.Where("")
