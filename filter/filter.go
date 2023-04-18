@@ -120,6 +120,7 @@ func (f Filter) Match(record interface{}) bool {
 }
 
 type Constraint struct {
+	Value  interface{}   `json:"value,omitempty"`
 	Range  []interface{} `json:"range,omitempty"`
 	Like   string        `json:"like,omitempty"`
 	GE     interface{}   `json:"ge,omitempty"`
