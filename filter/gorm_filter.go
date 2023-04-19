@@ -74,7 +74,7 @@ func constraintFilter(chains *gorm.DB, constraint *Constraint, fieldName string)
 			case "Like":
 				if len(constraint.Like) > 0 {
 					condition := fmt.Sprintf("%s like ?", fieldName)
-					chains.Where(condition, constraint.Like)
+					chains.Where(condition, "%"+constraint.Like+"%")
 				}
 			case "Range":
 				if len(constraint.Range) == 2 {
