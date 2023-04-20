@@ -11,18 +11,19 @@ import (
 	"github.com/databonfire/bonfire/auth/internal/conf"
 	"github.com/databonfire/bonfire/auth/internal/data"
 	"github.com/databonfire/bonfire/auth/internal/service"
+	"github.com/databonfire/bonfire/auth/user"
 	"github.com/go-kratos/kratos/v2/log"
 )
 
 // Injectors from wire.go:
 
-func wireService(confBiz *conf.Biz, confData *conf.Data, logger log.Logger) (*service.AuthService, func(), error) {
+func wireService(confBiz *conf.Biz, confData *conf.Data, logger log.Logger, arg map[string]user.HookFunc) (*service.AuthService, func(), error) {
 	dataData, cleanup, err := data.NewData(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}
 	userRepo := data.NewUserRepo(dataData, logger)
-	authUsecase := biz.NewAuthUsecase(confBiz, userRepo)
+	authUsecase := biz.NewAuthUsecase(confBiz, userRepo, arg)
 	authService := service.NewAuthService(confBiz, authUsecase)
 	return authService, func() {
 		cleanup()

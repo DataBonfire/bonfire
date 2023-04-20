@@ -17,6 +17,7 @@ type Option struct {
 	JWTSecret              string
 	PasswordSalt           string
 	PublicRegisterRoles    []string
+	Hooks                  map[string]user.HookFunc
 	Logger                 log.Logger
 }
 
@@ -39,7 +40,7 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 			Driver: opt.DataConfig.Database.Driver,
 			Source: opt.DataConfig.Database.Source,
 		},
-	}, opt.Logger)
+	}, opt.Logger, opt.Hooks)
 	if err != nil {
 		panic(err)
 	}

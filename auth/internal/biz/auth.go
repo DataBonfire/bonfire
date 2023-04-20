@@ -16,12 +16,15 @@ import (
 type AuthUsecase struct {
 	conf     *conf.Biz
 	userRepo UserRepo
+	// hooks
+	hooks map[string]user.HookFunc
 }
 
-func NewAuthUsecase(c *conf.Biz, userRepo UserRepo) *AuthUsecase {
+func NewAuthUsecase(c *conf.Biz, userRepo UserRepo, hooks map[string]user.HookFunc) *AuthUsecase {
 	return &AuthUsecase{
 		c,
 		userRepo,
+		hooks,
 	}
 }
 
@@ -39,7 +42,7 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
-	
+
 	// name, email, phone is duplicate
 	if err == nil {
 		errMsg := make(map[string]string)
@@ -67,6 +70,14 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 	err = au.userRepo.Save(ctx, userInfo)
 	if err != nil {
 		return err
+	}
+
+	if au.hooks != nil {
+		if h, ok := au.hooks[user.ON_REGISTER_SUCCESS]; ok {
+			if err = h(ctx, userInfo); err != nil {
+				return err
+			}
+		}
 	}
 
 	// notify

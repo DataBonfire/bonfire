@@ -6,6 +6,7 @@ type Option struct {
 	Parent                 string
 	ParentField            string
 	AuthPackage            bool
+	ResourcePathName       string
 	Resource               string
 	Model                  interface{}
 	HTTPHandlerMiddlewares []HTTPHandlerMiddleware

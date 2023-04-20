@@ -17,11 +17,14 @@ type HTTPHandlerMiddleware func(http.HandlerFunc) http.HandlerFunc
 
 func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	// TODO add support multiple resource nest and string pid
+	if opt.ResourcePathName == "" {
+		opt.ResourcePathName = opt.Resource
+	}
 	if nested := strings.Split(opt.Resource, "."); len(nested) > 1 {
 		if len(nested) > 2 {
 			panic(ErrExceedMaxNestDepth)
 		}
-		opt.Parent, opt.Resource = nested[0], nested[1]
+		opt.Parent, opt.ResourcePathName = nested[0], nested[1]
 		if v := strings.Split(opt.Parent, ":"); len(v) == 2 {
 			opt.Parent, opt.ParentField = v[0], v[1]
 		} else {
@@ -58,7 +61,7 @@ func RegisterHTTPServer(srv *http.Server, opt *Option) func() {
 	if opt.Parent != "" {
 		pathPrefix += opt.Parent + "/{pid}/"
 	}
-	pathPrefix += opt.Resource
+	pathPrefix += opt.ResourcePathName
 	r := srv.Route("/")
 	r.GET(pathPrefix, AssembleHandler(listHTTPHandler(svc), opt.HTTPHandlerMiddlewares))
 	r.GET(pathPrefix+"/{id}", AssembleHandler(showHTTPHandler(svc), opt.HTTPHandlerMiddlewares))

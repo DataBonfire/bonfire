@@ -11,6 +11,7 @@ import (
 	"github.com/databonfire/bonfire/auth/internal/data"
 	"github.com/databonfire/bonfire/auth/internal/server"
 	"github.com/databonfire/bonfire/auth/internal/service"
+	"github.com/databonfire/bonfire/auth/user"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
@@ -18,6 +19,6 @@ import (
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Biz, *conf.Server, *conf.Data, log.Logger) (*kratos.App, func(), error) {
+func wireApp(*conf.Biz, *conf.Server, *conf.Data, log.Logger, map[string]user.HookFunc) (*kratos.App, func(), error) {
 	panic(wire.Build(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, newApp))
 }

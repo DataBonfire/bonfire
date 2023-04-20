@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 
 	"gorm.io/gorm/clause"
@@ -88,13 +89,16 @@ func (r *repo) List(ctx context.Context, lr *ListRequest) ([]interface{}, int64,
 	if err != nil {
 		return nil, 0, err
 	}
-	if acer := ctx.Value("acer"); acer != nil {
-		if filters := acer.(ac.AccessController).Filters(ctx.Value("author"), ac.ActionBrowse, r.resource); filters != nil {
-			acDB, err := filter.GormFilter(rootDB, filters...)
-			if err != nil {
-				return nil, 0, err
+	// Nested resource inherit parent's permissions.
+	if strings.Index(r.resource, ".") == -1 {
+		if acer := ctx.Value("acer"); acer != nil {
+			if filters := acer.(ac.AccessController).Filters(ctx.Value("author"), ac.ActionBrowse, r.resource); filters != nil {
+				acDB, err := filter.GormFilter(rootDB, filters...)
+				if err != nil {
+					return nil, 0, err
+				}
+				db.Where(acDB)
 			}
-			db.Where(acDB)
 		}
 	}
 	if len(lr.Sort) > 0 && len(lr.Order) > 0 {
