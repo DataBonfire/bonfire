@@ -120,14 +120,15 @@ func (f Filter) Match(record interface{}) bool {
 }
 
 type Constraint struct {
-	Value  interface{}   `json:"value,omitempty"`
-	Range  []interface{} `json:"range,omitempty"`
-	Like   string        `json:"like,omitempty"`
-	GE     interface{}   `json:"ge,omitempty"`
-	GT     interface{}   `json:"gt,omitempty"`
-	LE     interface{}   `json:"le,omitempty"`
-	LT     interface{}   `json:"lt,omitempty"`
-	Weight float32       `json:"weight,omitempty"`
+	Value    interface{}   `json:"value,omitempty"`
+	Interval interface{}   `json:"interval,omitempty"`
+	Range    []interface{} `json:"range,omitempty"`
+	Like     string        `json:"like,omitempty"`
+	GE       interface{}   `json:"ge,omitempty"`
+	GT       interface{}   `json:"gt,omitempty"`
+	LE       interface{}   `json:"le,omitempty"`
+	LT       interface{}   `json:"lt,omitempty"`
+	Weight   float32       `json:"weight,omitempty"`
 
 	Negate bool `json:"negate,omitempty"`
 }
