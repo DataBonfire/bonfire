@@ -46,6 +46,8 @@ message LoginReply {
   string avatar = 3;
   repeated string roles = 4;
   Organization organization = 5;
+
+  uint32 id = 10;
 }
 
 message Organization {

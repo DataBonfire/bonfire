@@ -79,6 +79,9 @@ components:
                         type: string
                 organization:
                     $ref: '#/components/schemas/Organization'
+                id:
+                    type: integer
+                    format: uint32
         LoginRequest:
             type: object
             properties:

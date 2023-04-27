@@ -44,6 +44,7 @@ func (s *AuthService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 		return nil, err
 	}
 	reply := &pb.LoginReply{
+		Id:     uint32(userInfo.ID),
 		Token:  tokenStr,
 		Name:   userInfo.Name,
 		Avatar: userInfo.Avatar,
