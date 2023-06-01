@@ -9,7 +9,7 @@ import (
 
 type Post struct {
 	resource.Model
-	Title              string    `validate:"required" json:"title"`
+	Title              string    `validate:"required" json:"title" editor:"editor_title" admin:"admin_title"`
 	Content            string    `validate:"required" json:"content"`
 	Status             int       `json:"status" user:"-"`
 	PublishedAt        time.Time `json:"status"`

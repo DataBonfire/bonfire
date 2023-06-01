@@ -75,8 +75,11 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 	return srv
 }
 
-func readHTTPTransporter(t http.Transporter) (token, path string) {
-	req := t.Request()
+func readHTTPTransporter(t http.Transporter) (string, string) {
+	return readHTTPRequest(t.Request())
+}
+
+func readHTTPRequest(req *http.Request) (token, path string) {
 	path = req.URL.Path
 	token = req.Header.Get("Authorization")
 	scheme := "Bearer"

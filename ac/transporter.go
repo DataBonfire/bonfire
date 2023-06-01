@@ -7,8 +7,11 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
-func ReadHTTPTransporter(t http.Transporter) (action, res string) {
-	req := t.Request()
+func ReadHTTPTransporter(t http.Transporter) (string, string) {
+	return ReadHTTPRequest(t.Request())
+}
+
+func ReadHTTPRequest(req *http.Request) (action, res string) {
 	chips := strings.Split(strings.Trim(req.URL.Path, "/"), "/")
 	res = chips[0]
 	switch req.Method {

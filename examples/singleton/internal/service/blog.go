@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/databonfire/bonfire/examples/singleton/api/blog/v1"
 	"github.com/databonfire/bonfire/examples/singleton/internal/data"
@@ -28,5 +29,6 @@ func (s *BlogService) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.
 	return &pb.GetPostReply{}, nil
 }
 func (s *BlogService) ListPost(ctx context.Context, req *pb.ListPostRequest) (*pb.ListPostReply, error) {
+	fmt.Println(ctx.Value("filter_inject"))
 	return &pb.ListPostReply{}, nil
 }

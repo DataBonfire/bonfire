@@ -1,6 +1,9 @@
 package server
 
 import (
+	"context"
+	stdhttp "net/http"
+
 	"github.com/databonfire/bonfire/ac/rbac"
 	"github.com/databonfire/bonfire/auth"
 	v1 "github.com/databonfire/bonfire/examples/singleton/api/blog/v1"
@@ -14,12 +17,29 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
+type handler struct{ next stdhttp.Handler }
+
+func (h *handler) ServeHTTP(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+	ctx := context.WithValue(r.Context(), "filter_inject", "Hello Filter")
+	h.next.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // NewHTTPServer new an HTTP server.
 func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.BlogService, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
 			resource.Validator(),
+		),
+		http.Filter(
+			resource.MakeCors(),
+			func(next stdhttp.Handler) stdhttp.Handler {
+				return &handler{next}
+			},
+			auth.MakeFilter(&auth.FilterOption{
+				Secret: bc.Jwtsecret,
+			}),
+			rbac.MakeFilter(logger),
 		),
 	}
 	if c.Http.Network != "" {
@@ -50,12 +70,12 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 				"posts.comments": &biz.Comment{},
 				//"posts.comments.replies": &biz.Reply{},
 			},
-			HTTPHandlerMiddlewares: []resource.HTTPHandlerMiddleware{
-				auth.MakeMiddleware(&auth.MiddlewareOption{
-					Secret: bc.Jwtsecret,
-				}),
-				rbac.MakeMiddleware(logger),
-			},
+			//HTTPHandlerMiddlewares: []resource.HTTPHandlerMiddleware{
+			//	auth.MakeMiddleware(&auth.MiddlewareOption{
+			//		Secret: bc.Jwtsecret,
+			//	}),
+			//	rbac.MakeMiddleware(logger),
+			//},
 			DataConfig:          rdc,
 			JWTSecret:           bc.Jwtsecret,
 			PasswordSalt:        bc.PasswordSalt,
@@ -63,10 +83,10 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, blog *service.Bl
 			Logger:              logger,
 		})
 		rbac.RegisterHTTPServer(srv, []resource.HTTPHandlerMiddleware{
-			auth.MakeMiddleware(&auth.MiddlewareOption{
-				Secret: bc.Jwtsecret,
-			}),
-			rbac.MakeMiddleware(logger),
+			//auth.MakeMiddleware(&auth.MiddlewareOption{
+			//	Secret: bc.Jwtsecret,
+			//}),
+			//rbac.MakeMiddleware(logger),
 		})
 		//resource.RegisterHTTPServer(srv, &resource.Option{
 		//	Resource:   "posts",

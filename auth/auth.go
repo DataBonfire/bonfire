@@ -83,3 +83,9 @@ type MiddlewareOption server.Option
 func MakeMiddleware(opt *MiddlewareOption) resource.HTTPHandlerMiddleware {
 	return server.MakeAuthMiddleware((*server.Option)(opt))
 }
+
+type FilterOption server.Option
+
+func MakeFilter(opt *FilterOption) http.FilterFunc {
+	return server.MakeAuthFilter((*server.Option)(opt))
+}
