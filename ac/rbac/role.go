@@ -22,6 +22,7 @@ type RoleTemplate struct {
 
 	ActionsAll          []string
 	ActionsUID          []string
+	ActionsUIDSub       []map[string]string
 	ActionsSubordinates []string
 	ActionsCompany      []string
 
@@ -91,6 +92,21 @@ func MakeRoles(tpls []*RoleTemplate) []*Role {
 				Actions:  []string{"browse", "show", "create", "edit", "delete"},
 				Record:   map[string]interface{}{assoic: "U"},
 			}))
+		}
+		for _, assoicResV := range t.ActionsUIDSub {
+			for k, kv := range assoicResV {
+				v := strings.Split(kv, ".")
+				if len(v) != 2 {
+					panic("unexcepted resource or associated field")
+				}
+				res, assoic := v[0], v[1]
+				perms = append(perms, bindPermID(&Permission{
+					Resource: res,
+					Actions:  []string{"browse", "show", "create", "edit", "delete"},
+					Record:   map[string]interface{}{assoic: "U." + k},
+				}))
+			}
+
 		}
 		for _, assoicRes := range t.ActionsSubordinates {
 			v := strings.Split(assoicRes, ".")

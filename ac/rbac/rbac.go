@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"regexp"
 	"sync"
 	"time"
 
@@ -156,6 +157,8 @@ func accessorOrVisitor(v interface{}) Accessor {
 	return v.(Accessor)
 }
 
+var subModelField = regexp.MustCompile(`U\.(\w+)\.(\w+)`)
+
 func applyAccessor(a Accessor, f filter.Filter) filter.Filter {
 	filter := map[string]interface{}{}
 	for k, v := range f {
@@ -185,8 +188,31 @@ func applyAccessor(a Accessor, f filter.Filter) filter.Filter {
 				filter[k] = subs
 			}
 		default:
+			fv, ok := v.(string)
+			if ok {
+				matches := subModelField.FindStringSubmatch(fv)
+				if len(matches) == 3 {
+					subModel := matches[1]
+					subField := matches[2]
+					db := resource.GetRepo(subModel).(resource.Repo).DB()
+					var idMs []*IdModel
+					if err := db.Table(subModel).Select("id").Where(subField, a.GetID()).Find(&idMs).Error; err == nil {
+						ids := make([]uint, 0)
+						for _, v := range idMs {
+							ids = append(ids, v.ID)
+						}
+						filter[k] = ids
+						return filter
+					}
+				}
+			}
+
 			filter[k] = v
 		}
 	}
 	return filter
+}
+
+type IdModel struct {
+	ID uint `json:"id"`
 }
