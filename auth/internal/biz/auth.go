@@ -73,11 +73,22 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 	}
 
 	if au.hooks != nil {
+		if h, ok := au.hooks[user.ON_REGISTER_EMAIL_VERIFY]; ok {
+			if err = h(ctx, userInfo); err != nil {
+				return err
+			}
+		}
+		if h, ok := au.hooks[user.ON_REGISTER_PHONE_VERIFY]; ok {
+			if err = h(ctx, userInfo); err != nil {
+				return err
+			}
+		}
 		if h, ok := au.hooks[user.ON_REGISTER_SUCCESS]; ok {
 			if err = h(ctx, userInfo); err != nil {
 				return err
 			}
 		}
+
 	}
 
 	// notify
@@ -96,6 +107,31 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	if userInfo.PasswordHashed != passwordHashed {
 		return nil, "", ErrLoginPassword
 	}
+
+	if au.hooks != nil {
+		if h, ok := au.hooks[user.ON_LOGIN_EMAIL_VERIFY]; ok {
+			if !userInfo.EmailVerified {
+				return nil, "", ErrEmailNeedVerified
+			}
+			if h != nil {
+				if err = h(ctx, userInfo); err != nil {
+					return nil, "", err
+				}
+			}
+		}
+
+		if h, ok := au.hooks[user.ON_LOGIN_PHONE_VERIFY]; ok {
+			if !userInfo.PhoneVerified {
+				return nil, "", ErrPhoneNeedVerified
+			}
+			if h != nil {
+				if err = h(ctx, userInfo); err != nil {
+					return nil, "", err
+				}
+			}
+		}
+	}
+
 	// generate token
 	tokenStr, err := utils.GenToken(&utils.UserSession{UserId: userInfo.ID}, au.conf.Jwtsecret)
 	if err != nil {
@@ -110,4 +146,6 @@ var (
 	ErrRegisterIsNotPublic = errors.New("register is not public")
 	ErrLoginPassword       = errors.New("password error")
 	ErrGenerateToken       = errors.New("gen token error")
+	ErrEmailNeedVerified   = errors.New("email need verified")
+	ErrPhoneNeedVerified   = errors.New("phone need verified")
 )

@@ -10,7 +10,9 @@ type User struct {
 	Name           string `json:"name"`
 	Avatar         string `json:"avatar"`
 	Email          string `json:"email"`
+	EmailVerified  bool   `json:"email_verified"`
 	Phone          string `json:"phone"`
+	PhoneVerified  bool   `json:"phone_verified"`
 	Password       string `json:"password,omitempty" gorm:"-"`
 	PasswordHashed string `json:"-"`
 
