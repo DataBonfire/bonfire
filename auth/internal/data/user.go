@@ -30,15 +30,15 @@ func (r *userRepo) Find(ctx context.Context, name, email, phone string) (*user.U
 		return nil, errors.New("all params is empty")
 	}
 
-	chains := r.data.db.Debug().WithContext(ctx).Where("")
+	chains := r.data.db.WithContext(ctx).Where("")
 	if len(name) != 0 {
-		chains.Where("name = ?", name)
+		chains.Or("name = ?", name)
 	}
 	if len(email) != 0 {
-		chains.Where("email = ?", email)
+		chains.Or("email = ?", email)
 	}
 	if len(phone) != 0 {
-		chains.Where("phone = ?", phone)
+		chains.Or("phone = ?", phone)
 	}
 
 	if err := chains.Limit(1).Find(&data).Error; err != nil {
