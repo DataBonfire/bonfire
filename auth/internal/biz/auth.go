@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"errors"
+	"net/mail"
 
 	kerrors "github.com/go-kratos/kratos/v2/errors"
 	"gorm.io/gorm"
@@ -97,6 +98,11 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 }
 
 func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.User, string, error) {
+	if _, err := mail.ParseAddress(req.Name); err == nil {
+		req.Email = req.Name
+		req.Name = ""
+	}
+
 	// find user
 	userInfo, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
 	if err != nil {

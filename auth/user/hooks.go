@@ -12,4 +12,6 @@ const (
 
 	ON_LOGIN_EMAIL_VERIFY = "on_login_email_verify"
 	ON_LOGIN_PHONE_VERIFY = "on_login_phone_verify"
+
+	ON_FORGET_PASSWORD = "on_forget_password"
 )
