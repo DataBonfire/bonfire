@@ -2,7 +2,7 @@ package user
 
 import "context"
 
-type HookFunc func(context.Context, *User) error
+type HookFunc func(context.Context, *User) (context.Context, error)
 
 const (
 	ON_REGISTER_EMAIL_VERIFY = "on_register_email_verify"
@@ -14,4 +14,5 @@ const (
 	ON_LOGIN_PHONE_VERIFY = "on_login_phone_verify"
 
 	ON_FORGET_PASSWORD = "on_forget_password"
+	ON_RESET_PASSWORD  = "on_reset_password"
 )

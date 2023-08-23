@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-http v2.5.3
 // - protoc             v3.21.12
-// source: auth/api/v1/auth.proto
+// source: v1/auth.proto
 
 package v1
 
@@ -19,18 +19,24 @@ var _ = binding.EncodeURL
 
 const _ = http.SupportPackageIsVersion1
 
+const OperationAuthForgetPassword = "/api.v1.Auth/ForgetPassword"
 const OperationAuthLogin = "/api.v1.Auth/Login"
 const OperationAuthRegister = "/api.v1.Auth/Register"
+const OperationAuthResetPassword = "/api.v1.Auth/ResetPassword"
 
 type AuthHTTPServer interface {
+	ForgetPassword(context.Context, *ForgetPasswordRequest) (*CommonReply, error)
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	Register(context.Context, *RegisterRequest) (*RegisterReply, error)
+	ResetPassword(context.Context, *ResetPasswordRequest) (*CommonReply, error)
 }
 
 func RegisterAuthHTTPServer(s *http.Server, srv AuthHTTPServer) {
 	r := s.Route("/")
 	r.POST("/auth/register", _Auth_Register0_HTTP_Handler(srv))
 	r.POST("/auth/login", _Auth_Login0_HTTP_Handler(srv))
+	r.POST("/auth/forget_password", _Auth_ForgetPassword0_HTTP_Handler(srv))
+	r.POST("/auth/reset_password", _Auth_ResetPassword0_HTTP_Handler(srv))
 }
 
 func _Auth_Register0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
@@ -71,9 +77,49 @@ func _Auth_Login0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error 
 	}
 }
 
+func _Auth_ForgetPassword0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ForgetPasswordRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAuthForgetPassword)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ForgetPassword(ctx, req.(*ForgetPasswordRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*CommonReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _Auth_ResetPassword0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in ResetPasswordRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAuthResetPassword)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.ResetPassword(ctx, req.(*ResetPasswordRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*CommonReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AuthHTTPClient interface {
+	ForgetPassword(ctx context.Context, req *ForgetPasswordRequest, opts ...http.CallOption) (rsp *CommonReply, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginReply, err error)
 	Register(ctx context.Context, req *RegisterRequest, opts ...http.CallOption) (rsp *RegisterReply, err error)
+	ResetPassword(ctx context.Context, req *ResetPasswordRequest, opts ...http.CallOption) (rsp *CommonReply, err error)
 }
 
 type AuthHTTPClientImpl struct {
@@ -82,6 +128,19 @@ type AuthHTTPClientImpl struct {
 
 func NewAuthHTTPClient(client *http.Client) AuthHTTPClient {
 	return &AuthHTTPClientImpl{client}
+}
+
+func (c *AuthHTTPClientImpl) ForgetPassword(ctx context.Context, in *ForgetPasswordRequest, opts ...http.CallOption) (*CommonReply, error) {
+	var out CommonReply
+	pattern := "/auth/forget_password"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationAuthForgetPassword))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
 }
 
 func (c *AuthHTTPClientImpl) Login(ctx context.Context, in *LoginRequest, opts ...http.CallOption) (*LoginReply, error) {
@@ -102,6 +161,19 @@ func (c *AuthHTTPClientImpl) Register(ctx context.Context, in *RegisterRequest, 
 	pattern := "/auth/register"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationAuthRegister))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AuthHTTPClientImpl) ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...http.CallOption) (*CommonReply, error) {
+	var out CommonReply
+	pattern := "/auth/reset_password"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationAuthResetPassword))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {

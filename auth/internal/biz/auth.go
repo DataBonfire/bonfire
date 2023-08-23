@@ -75,17 +75,17 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 
 	if au.hooks != nil {
 		if h, ok := au.hooks[user.ON_REGISTER_EMAIL_VERIFY]; ok {
-			if err = h(ctx, userInfo); err != nil {
+			if _, err = h(ctx, userInfo); err != nil {
 				return err
 			}
 		}
 		if h, ok := au.hooks[user.ON_REGISTER_PHONE_VERIFY]; ok {
-			if err = h(ctx, userInfo); err != nil {
+			if _, err = h(ctx, userInfo); err != nil {
 				return err
 			}
 		}
 		if h, ok := au.hooks[user.ON_REGISTER_SUCCESS]; ok {
-			if err = h(ctx, userInfo); err != nil {
+			if _, err = h(ctx, userInfo); err != nil {
 				return err
 			}
 		}
@@ -120,7 +120,7 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 				return nil, "", ErrEmailNeedVerified
 			}
 			if h != nil {
-				if err = h(ctx, userInfo); err != nil {
+				if _, err = h(ctx, userInfo); err != nil {
 					return nil, "", err
 				}
 			}
@@ -131,7 +131,7 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 				return nil, "", ErrPhoneNeedVerified
 			}
 			if h != nil {
-				if err = h(ctx, userInfo); err != nil {
+				if _, err = h(ctx, userInfo); err != nil {
 					return nil, "", err
 				}
 			}
@@ -147,6 +147,58 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	return userInfo, tokenStr, nil
 }
 
+func (au *AuthUsecase) ForgetPassword(ctx context.Context, req *pb.ForgetPasswordRequest) error {
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		return err
+	}
+	userInfo, err := au.userRepo.Find(ctx, "", req.Email, req.Phone)
+	if err != nil {
+		return err
+	}
+
+	if au.hooks != nil {
+		if h, ok := au.hooks[user.ON_FORGET_PASSWORD]; ok {
+			if _, err = h(ctx, userInfo); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (au *AuthUsecase) ResetPassword(ctx context.Context, req *pb.ResetPasswordRequest) error {
+	if req.Code == "" || len(req.Password) < 6 || req.Password != req.RepeatedPassword {
+		return ErrLoginPassword
+	}
+
+	if au.hooks == nil {
+		return ErrNeedHook
+	}
+	ctx = context.WithValue(ctx, "code", req.Code)
+
+	h, okHooks := au.hooks[user.ON_RESET_PASSWORD]
+	if !okHooks {
+		return ErrNeedHook
+	}
+	var err error
+	ctx, err = h(ctx, nil)
+	if err != nil {
+		return err
+	}
+	userInfo, ok := ctx.Value("resource_user").(*user.User)
+	if !ok || userInfo == nil {
+		return ErrUserEmpty
+	}
+
+	userInfo.PasswordHashed = utils.HashPassword(req.Password, au.conf.PasswordSalt)
+	if err := au.userRepo.Save(ctx, userInfo); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var (
 	ErrAccountDuplicate    = errors.New("account duplicate")
 	ErrRegisterIsNotPublic = errors.New("register is not public")
@@ -154,4 +206,6 @@ var (
 	ErrGenerateToken       = errors.New("gen token error")
 	ErrEmailNeedVerified   = errors.New("email need verified")
 	ErrPhoneNeedVerified   = errors.New("phone need verified")
+	ErrNeedHook            = errors.New("need hook")
+	ErrUserEmpty           = errors.New("user is empty")
 )

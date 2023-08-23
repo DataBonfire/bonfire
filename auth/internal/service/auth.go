@@ -23,6 +23,15 @@ func NewAuthService(c *conf.Biz, au *biz.AuthUsecase) *AuthService {
 	}
 }
 
+func (s *AuthService) ResetPassword(ctx context.Context, req *pb.ResetPasswordRequest) (*pb.CommonReply, error) {
+
+	return &pb.CommonReply{Id: "1"}, s.authUsecase.ResetPassword(ctx, req)
+}
+
+func (s *AuthService) ForgetPassword(ctx context.Context, req *pb.ForgetPasswordRequest) (*pb.CommonReply, error) {
+	return &pb.CommonReply{Id: "1"}, s.authUsecase.ForgetPassword(ctx, req)
+}
+
 func (s *AuthService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterReply, error) {
 	var registerValid bool
 	for _, v := range s.publicRegisterRoles {

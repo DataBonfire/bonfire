@@ -22,6 +22,33 @@ service Auth {
       body: "*",
     };
   };
+  rpc ForgetPassword (ForgetPasswordRequest) returns (CommonReply) {
+    option (google.api.http) = {
+      post: "/auth/forget_password",
+      body: "*",
+    };
+  };
+  rpc ResetPassword (ResetPasswordRequest) returns (CommonReply) {
+    option (google.api.http) = {
+      post: "/auth/reset_password",
+      body: "*",
+    };
+  };
+}
+
+message ForgetPasswordRequest {
+  string email = 1;
+  string phone = 2;
+}
+
+message ResetPasswordRequest {
+  string code = 1;
+  string password = 2;
+  string repeated_password = 3 [json_name = "repeated_password"];
+}
+
+message CommonReply {
+  string id = 1;
 }
 
 message RegisterRequest {

@@ -16,6 +16,8 @@ import (
 var publicPaths = []string{
 	"/auth/register",
 	"/auth/login",
+	"/auth/forget_password",
+	"/auth/reset_password",
 }
 
 type Option struct {
