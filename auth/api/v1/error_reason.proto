@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "errors/errors.proto";
+option go_package = "github.com/databonfire/bonfire/api/v1;v1";
+
+enum ErrorReason {
+  PARAM_ERROR = 0 [(errors.code) = 400];
+  NEED_LOGIN = 1 [(errors.code) = 401];
+  PAYMENT_REQUIRED = 2 [(errors.code) = 402];
+  FORBIDDEN_REQUEST = 3 [(errors.code) = 403];
+}

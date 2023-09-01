@@ -32,6 +32,9 @@ func GenToken(us *UserSession, jwtKey string) (string, error) {
 }
 
 func ParseToken(tokenString, jwtKey string) (*UserSession, error) {
+	if len(tokenString) == 0 || len(jwtKey) == 0 {
+		return nil, errors.New("invalid token")
+	}
 	t := &jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, t, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

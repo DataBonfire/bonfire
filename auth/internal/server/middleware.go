@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	v1 "github.com/databonfire/bonfire/auth/api/v1"
 	"regexp"
 	"strings"
 
@@ -53,7 +54,7 @@ func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		// Auth
 		userSession, err := utils.ParseToken(token, m.secret)
 		if err != nil {
-			return err
+			return ErrNeedLogin
 		}
 		db := resource.GetRepo("auth.users").(resource.Repo).DB()
 		var u user.User
@@ -76,3 +77,8 @@ func MakeAuthMiddleware(opt *Option) resource.HTTPHandlerMiddleware {
 	am := &authMiddleware{secret: opt.Secret, publicPaths: opt.PublicPaths, subordinatesFinder: opt.SubordinatesFinder}
 	return (resource.HTTPHandlerMiddleware)(am.Handle)
 }
+
+var (
+	//ErrNeedLogin = kerrors.Unauthorized(v1.ErrorReason_NEED_LOGIN.String(), "need login")
+	ErrNeedLogin = v1.ErrorNeedLogin("need login")
+)

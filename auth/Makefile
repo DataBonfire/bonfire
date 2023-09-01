@@ -36,14 +36,21 @@ config:
 .PHONY: api
 # generate api proto
 api:
-	protoc --proto_path=./api \
+	protoc --proto_path=./api/v1 \
 	       --proto_path=/Users/xiaoqian/Work/moca/databonfire/moca-planet-backend-v3/third_party \
  	       --go_out=paths=source_relative:./api \
- 	       --go-http_out=paths=source_relative:./api \
+ 	       --go-http_out=paths=source_relative:./api/v1 \
  	       --go-grpc_out=paths=source_relative:./api \
 	       --openapi_out=fq_schema_naming=true,default_response=false:. \
 	       $(API_PROTO_FILES)
 
+.PHONY: errors
+errors:
+	protoc --proto_path=./api/v1 \
+         --proto_path=/Users/xiaoqian/Work/moca/databonfire/moca-planet-backend-v3/third_party \
+         --go_out=paths=source_relative:./api/v1 \
+         --go-errors_out=paths=source_relative:./api/v1 \
+	       $(API_PROTO_FILES)
 .PHONY: build
 # build
 build:
