@@ -106,7 +106,10 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	// find user
 	userInfo, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
 	if err != nil {
-		return nil, "", err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, "", ErrLoginPassword
+		}
+		return nil, "", pb.ErrorInternal(err.Error())
 	}
 	// check password
 	passwordHashed := utils.HashPassword(req.Password, au.conf.PasswordSalt)
@@ -202,10 +205,17 @@ func (au *AuthUsecase) ResetPassword(ctx context.Context, req *pb.ResetPasswordR
 var (
 	ErrAccountDuplicate    = errors.New("account duplicate")
 	ErrRegisterIsNotPublic = errors.New("register is not public")
-	ErrLoginPassword       = errors.New("password error")
-	ErrGenerateToken       = errors.New("gen token error")
-	ErrEmailNeedVerified   = errors.New("email need verified")
-	ErrPhoneNeedVerified   = errors.New("phone need verified")
-	ErrNeedHook            = errors.New("need hook")
-	ErrUserEmpty           = errors.New("user is empty")
+	ErrLoginPassword       = pb.ErrorInvalidParam("user or password error")
+	ErrGenerateToken       = pb.ErrorInternal("gen token error")
+	ErrEmailNeedVerified   = pb.ErrorInvalidParam("email need verified")
+	ErrPhoneNeedVerified   = pb.ErrorInvalidParam("phone need verified")
+	ErrNeedHook            = pb.ErrorInvalidParam("need hook")
+	ErrUserEmpty           = pb.ErrorInvalidParam("user is empty")
+)
+
+var (
+	ErrNoEnoughCredit = pb.ErrorPaymentRequired("no enough credits")
+	ErrExternal       = pb.ErrorExternal("external err")
+	ErrInternal       = pb.ErrorInternal("internal err")
+	ErrParam          = pb.ErrorInvalidParam("external err")
 )

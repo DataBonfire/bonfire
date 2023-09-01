@@ -11,16 +11,16 @@ import (
 // is compatible with the kratos package it is being compiled against.
 const _ = errors.SupportPackageIsVersion1
 
-func IsParamError(err error) bool {
+func IsInvalidParam(err error) bool {
 	if err == nil {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_PARAM_ERROR.String() && e.Code == 400
+	return e.Reason == ErrorReason_INVALID_PARAM.String() && e.Code == 400
 }
 
-func ErrorParamError(format string, args ...interface{}) *errors.Error {
-	return errors.New(400, ErrorReason_PARAM_ERROR.String(), fmt.Sprintf(format, args...))
+func ErrorInvalidParam(format string, args ...interface{}) *errors.Error {
+	return errors.New(400, ErrorReason_INVALID_PARAM.String(), fmt.Sprintf(format, args...))
 }
 
 func IsNeedLogin(err error) bool {
@@ -57,4 +57,28 @@ func IsForbiddenRequest(err error) bool {
 
 func ErrorForbiddenRequest(format string, args ...interface{}) *errors.Error {
 	return errors.New(403, ErrorReason_FORBIDDEN_REQUEST.String(), fmt.Sprintf(format, args...))
+}
+
+func IsInternal(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_INTERNAL.String() && e.Code == 500
+}
+
+func ErrorInternal(format string, args ...interface{}) *errors.Error {
+	return errors.New(500, ErrorReason_INTERNAL.String(), fmt.Sprintf(format, args...))
+}
+
+func IsExternal(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_EXTERNAL.String() && e.Code == 500
+}
+
+func ErrorExternal(format string, args ...interface{}) *errors.Error {
+	return errors.New(500, ErrorReason_EXTERNAL.String(), fmt.Sprintf(format, args...))
 }
