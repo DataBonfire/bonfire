@@ -58,7 +58,8 @@ func (t *Timestamp) MarshalJSON() ([]byte, error) {
 	if *t == 0 {
 		return []byte("\"\""), nil
 	}
-	return []byte(strconv.Quote(time.Unix(int64(*t), 0).Format("2006-01-02 15:04:05"))), nil
+	return []byte(strconv.Quote(time.Unix(int64(*t), 0).Format("2006-01-02T15:04:05.000Z"))), nil
+	//return []byte(strconv.Quote(time.Unix(int64(*t), 0).Format("2006-01-02 15:04:05"))), nil
 }
 
 func (t *Timestamp) UnmarshalJSON(data []byte) error {
