@@ -72,8 +72,8 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	if len(v) < 10 {
 		return ErrInvalidTimeFormat
 	}
-	v = (strings.ReplaceAll(v, "/", "-") + " 00:00:00")[:19]
-	parsed, err := time.Parse("2006-01-02 15:04:05", v)
+	//v = (strings.ReplaceAll(v, "/", "-") + " 00:00:00")[:19]
+	parsed, err := time.Parse("2006-01-02T15:04:05.000Z", v)
 	if err != nil {
 		return err
 	}
