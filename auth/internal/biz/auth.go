@@ -195,6 +195,29 @@ func (au *AuthUsecase) ForgetPassword(ctx context.Context, req *pb.ForgetPasswor
 	return nil
 }
 
+func (au *AuthUsecase) ResentRegister(ctx context.Context, req *pb.ResentRegisterRequest) error {
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		return err
+	}
+	userInfo, err := au.userRepo.Find(ctx, "", req.Email, req.Phone)
+	if err != nil {
+		errMsg := make(map[string]string)
+		errMsg["email"] = "Account does not exist,please sign up"
+		return kerrors.BadRequest("login error", "Resent register").WithMetadata(errMsg)
+		//return err
+	}
+
+	if au.hooks != nil {
+		if h, ok := au.hooks[user.ON_RESENT_REGISTER]; ok {
+			if _, err = h(ctx, userInfo); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (au *AuthUsecase) ResetPassword(ctx context.Context, req *pb.ResetPasswordRequest) error {
 	if req.Code == "" {
 		return ErrResetPasswordCode

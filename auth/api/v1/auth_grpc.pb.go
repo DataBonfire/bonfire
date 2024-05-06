@@ -23,6 +23,7 @@ const (
 	Auth_Login_FullMethodName          = "/api.v1.Auth/Login"
 	Auth_ForgetPassword_FullMethodName = "/api.v1.Auth/ForgetPassword"
 	Auth_ResetPassword_FullMethodName  = "/api.v1.Auth/ResetPassword"
+	Auth_ResentRegister_FullMethodName = "/api.v1.Auth/ResentRegister"
 )
 
 // AuthClient is the client API for Auth service.
@@ -33,6 +34,7 @@ type AuthClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
 	ForgetPassword(ctx context.Context, in *ForgetPasswordRequest, opts ...grpc.CallOption) (*CommonReply, error)
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*CommonReply, error)
+	ResentRegister(ctx context.Context, in *ResentRegisterRequest, opts ...grpc.CallOption) (*CommonReply, error)
 }
 
 type authClient struct {
@@ -79,6 +81,15 @@ func (c *authClient) ResetPassword(ctx context.Context, in *ResetPasswordRequest
 	return out, nil
 }
 
+func (c *authClient) ResentRegister(ctx context.Context, in *ResentRegisterRequest, opts ...grpc.CallOption) (*CommonReply, error) {
+	out := new(CommonReply)
+	err := c.cc.Invoke(ctx, Auth_ResentRegister_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
@@ -87,6 +98,7 @@ type AuthServer interface {
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	ForgetPassword(context.Context, *ForgetPasswordRequest) (*CommonReply, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*CommonReply, error)
+	ResentRegister(context.Context, *ResentRegisterRequest) (*CommonReply, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -105,6 +117,9 @@ func (UnimplementedAuthServer) ForgetPassword(context.Context, *ForgetPasswordRe
 }
 func (UnimplementedAuthServer) ResetPassword(context.Context, *ResetPasswordRequest) (*CommonReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetPassword not implemented")
+}
+func (UnimplementedAuthServer) ResentRegister(context.Context, *ResentRegisterRequest) (*CommonReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResentRegister not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -191,6 +206,24 @@ func _Auth_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_ResentRegister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResentRegisterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).ResentRegister(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_ResentRegister_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).ResentRegister(ctx, req.(*ResentRegisterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +246,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResetPassword",
 			Handler:    _Auth_ResetPassword_Handler,
+		},
+		{
+			MethodName: "ResentRegister",
+			Handler:    _Auth_ResentRegister_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

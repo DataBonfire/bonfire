@@ -78,6 +78,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /auth/resent_register:
+        post:
+            tags:
+                - Auth
+            operationId: Auth_ResentRegister
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ResentRegisterRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CommonReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /auth/reset_password:
         post:
             tags:
@@ -179,6 +203,13 @@ components:
                 repassword:
                     type: string
                 company_name:
+                    type: string
+        ResentRegisterRequest:
+            type: object
+            properties:
+                email:
+                    type: string
+                phone:
                     type: string
         ResetPasswordRequest:
             type: object
