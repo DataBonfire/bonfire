@@ -57,6 +57,8 @@ message RegisterRequest {
   string phone = 3;
   string password = 4 [(validate.rules).string.min_len = 6];
   string role = 5;
+  string repassword = 6 [json_name = "repassword"];
+  string company_name = 7 [json_name = "company_name"];
 }
 message RegisterReply {}
 

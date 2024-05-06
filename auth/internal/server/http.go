@@ -75,8 +75,12 @@ func NewHTTPServer(c *conf.Server, bc *conf.Biz, dc *conf.Data, auth *service.Au
 	return srv
 }
 
-func readHTTPTransporter(t http.Transporter) (token, path string) {
+func readHTTPTransporter(t http.Transporter) (token, path string, info *requestInfo) {
 	req := t.Request()
+	info = &requestInfo{}
+	info.Method = req.Method
+	info.IP = getAccessIP(req)
+	info.UserAgent = req.Header.Get("User-Agent")
 	path = req.URL.Path
 	token = req.Header.Get("Authorization")
 	scheme := "Bearer"
@@ -85,4 +89,23 @@ func readHTTPTransporter(t http.Transporter) (token, path string) {
 		token = token[l+1:]
 	}
 	return
+}
+
+type requestInfo struct {
+	Method        string
+	IP            string
+	UserAgent     string
+	RequestedWith string
+	Referer       string
+}
+
+func getAccessIP(c *http.Request) string {
+	ks := []string{"X-Real-IP", "X-Forwarded-For"}
+	for _, v := range ks {
+		accessIP := c.Header.Get(v)
+		if len(accessIP) != 0 {
+			return accessIP
+		}
+	}
+	return ""
 }

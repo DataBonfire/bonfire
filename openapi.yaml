@@ -6,6 +6,30 @@ info:
     title: Auth API
     version: 0.0.1
 paths:
+    /auth/forget_password:
+        post:
+            tags:
+                - Auth
+            operationId: Auth_ForgetPassword
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ForgetPasswordRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CommonReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /auth/login:
         post:
             tags:
@@ -54,8 +78,44 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /auth/reset_password:
+        post:
+            tags:
+                - Auth
+            operationId: Auth_ResetPassword
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ResetPasswordRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CommonReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
 components:
     schemas:
+        CommonReply:
+            type: object
+            properties:
+                id:
+                    type: string
+        ForgetPasswordRequest:
+            type: object
+            properties:
+                email:
+                    type: string
+                phone:
+                    type: string
         GoogleProtobufAny:
             type: object
             properties:
@@ -115,6 +175,19 @@ components:
                 password:
                     type: string
                 role:
+                    type: string
+                repassword:
+                    type: string
+                company_name:
+                    type: string
+        ResetPasswordRequest:
+            type: object
+            properties:
+                code:
+                    type: string
+                password:
+                    type: string
+                repeated_password:
                     type: string
         Status:
             type: object

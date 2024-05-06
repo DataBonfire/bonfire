@@ -6,6 +6,7 @@ import (
 	v1 "github.com/databonfire/bonfire/auth/api/v1"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/databonfire/bonfire/auth/internal/utils"
 	"github.com/databonfire/bonfire/auth/user"
@@ -26,6 +27,8 @@ type Option struct {
 	PublicPaths        []string
 	ResourceExtracts   []*regexp.Regexp
 	SubordinatesFinder func(ctx context.Context, u *user.User) ([]uint, error)
+
+	AccessLogIgnores []string
 }
 
 type authMiddleware struct {
@@ -33,6 +36,8 @@ type authMiddleware struct {
 	publicPaths        []string
 	resourceExtracts   []*regexp.Regexp
 	subordinatesFinder func(ctx context.Context, u *user.User) ([]uint, error)
+
+	accessLogIgnores []string
 }
 
 func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
@@ -42,7 +47,7 @@ func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			return errors.New("Unexcept err when get transport from server context")
 		}
 		htx := tx.(http.Transporter)
-		token, path := readHTTPTransporter(htx)
+		token, path, _requestInfo := readHTTPTransporter(htx)
 
 		// Public Endpoints
 		for _, v := range append(m.publicPaths, publicPaths...) {
@@ -69,12 +74,35 @@ func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		if err != nil {
 			return err
 		}
+		_userLog := &user.UserLog{
+			UserId:     u.ID,
+			MethodPath: _requestInfo.Method,
+			AccessAt:   time.Now().Unix(),
+			UA:         _requestInfo.UserAgent,
+			IP:         _requestInfo.IP,
+			RequestUri: path,
+		}
+		if u.ID > 0 {
+			ignore := false
+			for _, v := range []string{"sts_tokens", "global_unread_messages"} {
+				if strings.Contains(path, v) {
+					ignore = true
+					break
+				}
+			}
+			if !ignore {
+				if errCreate := db.Create(_userLog).Error; errCreate != nil {
+					return errCreate
+				}
+			}
+		}
+
 		return next(resource.ContextWithValue(ctx, "author", &u))
 	})
 }
 
 func MakeAuthMiddleware(opt *Option) resource.HTTPHandlerMiddleware {
-	am := &authMiddleware{secret: opt.Secret, publicPaths: opt.PublicPaths, subordinatesFinder: opt.SubordinatesFinder}
+	am := &authMiddleware{secret: opt.Secret, publicPaths: opt.PublicPaths, subordinatesFinder: opt.SubordinatesFinder, accessLogIgnores: opt.AccessLogIgnores}
 	return (resource.HTTPHandlerMiddleware)(am.Handle)
 }
 

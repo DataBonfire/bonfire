@@ -30,31 +30,53 @@ func NewAuthUsecase(c *conf.Biz, userRepo UserRepo, hooks map[string]user.HookFu
 }
 
 func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) error {
-	if len(req.Phone) == 0 && len(req.Email) == 0 {
-		// Phone and email cannot both be empty
-		errMsg := map[string]string{
-			"email": "email is empty",
-			"phone": "phone is empty",
-		}
-		return kerrors.BadRequest("phone and email cannot both be empty", "").WithMetadata(errMsg)
+	errMsg := make(map[string]string)
+	//if len(req.Email) == 0 {
+	//	// Phone and email cannot both be empty
+	//	errMsg = map[string]string{
+	//		"email": "The email format is incorrect",
+	//		//"phone": "phone is empty",
+	//	}
+	//	return kerrors.BadRequest("phone and email cannot both be empty", "").WithMetadata(errMsg)
+	//}
+
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		errMsg["email"] = "The email format is incorrect"
+	}
+	if len(req.Name) < 3 || len(req.Name) > 30 {
+		errMsg["name"] = "Keep the length between 3 and 30 characters"
+	}
+	if len(req.Password) < 6 || len(req.Password) > 12 {
+		errMsg["password"] = "Password length should be between 6 and 12 characters"
+	}
+	if req.Password != req.Repassword {
+		errMsg["password"] = "Passwords do not match"
+		errMsg["repassword"] = "Passwords do not match"
+	}
+	if len(req.CompanyName) < 3 || len(req.CompanyName) > 50 {
+		errMsg["company_name"] = "Keep the length between 3 and 50 characters"
+	}
+
+	if len(errMsg) != 0 {
+		return kerrors.BadRequest("register error", "").WithMetadata(errMsg)
 	}
 
 	_u, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
 	// name, email, phone is duplicate
 	if err == nil {
-		errMsg := make(map[string]string)
+
 		if len(_u.Name) != 0 && _u.Name == req.Name {
-			errMsg["name"] = "name is duplicate"
+			errMsg["name"] = "Username has already been taken"
 		}
 		if len(_u.Phone) != 0 && _u.Phone == req.Phone {
-			errMsg["phone"] = "phone is duplicate"
+			errMsg["phone"] = "Phone has already been taken"
 		}
 		if len(_u.Email) != 0 && _u.Email == req.Email {
-			errMsg["email"] = "email is duplicate"
+			errMsg["email"] = "This email has already been registered"
 		}
 
 		return kerrors.BadRequest("account duplicate", "").WithMetadata(errMsg)
@@ -98,6 +120,7 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 }
 
 func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.User, string, error) {
+	errMsg := make(map[string]string)
 	if _, err := mail.ParseAddress(req.Name); err == nil {
 		req.Email = req.Name
 		req.Name = ""
@@ -107,14 +130,16 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	userInfo, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, "", ErrLoginPassword
+			errMsg["name"] = "Account does not exist,please sign up"
+			return nil, "", kerrors.BadRequest("login error", "Account does not exist,please sign up").WithMetadata(errMsg)
 		}
 		return nil, "", pb.ErrorInternal(err.Error())
 	}
 	// check password
 	passwordHashed := utils.HashPassword(req.Password, au.conf.PasswordSalt)
 	if userInfo.PasswordHashed != passwordHashed {
-		return nil, "", ErrLoginPassword
+		errMsg["password"] = "Incorrect password"
+		return nil, "", kerrors.BadRequest("login error", "Incorrect password").WithMetadata(errMsg)
 	}
 
 	if au.hooks != nil {
@@ -171,8 +196,11 @@ func (au *AuthUsecase) ForgetPassword(ctx context.Context, req *pb.ForgetPasswor
 }
 
 func (au *AuthUsecase) ResetPassword(ctx context.Context, req *pb.ResetPasswordRequest) error {
-	if req.Code == "" || len(req.Password) < 6 || req.Password != req.RepeatedPassword {
-		return ErrLoginPassword
+	if req.Code == "" {
+		return ErrResetPasswordCode
+	}
+	if len(req.Password) < 6 || len(req.Password) > 12 || req.Password != req.RepeatedPassword {
+		return ErrResetPassword
 	}
 
 	if au.hooks == nil {
@@ -205,7 +233,10 @@ func (au *AuthUsecase) ResetPassword(ctx context.Context, req *pb.ResetPasswordR
 var (
 	ErrAccountDuplicate    = errors.New("account duplicate")
 	ErrRegisterIsNotPublic = errors.New("register is not public")
-	ErrLoginPassword       = pb.ErrorInvalidParam("user or password error")
+	ErrAccountNotExist     = pb.ErrorInvalidParam("Account does not exist,please sign up")
+	ErrLoginPassword       = pb.ErrorInvalidParam("Incorrect password")
+	ErrResetPasswordCode   = pb.ErrorInvalidParam("Code is error")
+	ErrResetPassword       = pb.ErrorInvalidParam("Password length should be between 6 and 12 characters.Or passwords do not match")
 	ErrGenerateToken       = pb.ErrorInternal("gen token error")
 	ErrEmailNeedVerified   = pb.ErrorInvalidParam("email need verified")
 	ErrPhoneNeedVerified   = pb.ErrorInvalidParam("phone need verified")
