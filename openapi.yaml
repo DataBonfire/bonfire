@@ -78,16 +78,16 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /auth/resent_register:
+    /auth/resend_register:
         post:
             tags:
                 - Auth
-            operationId: Auth_ResentRegister
+            operationId: Auth_ResendRegister
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/ResentRegisterRequest'
+                            $ref: '#/components/schemas/ResendRegisterRequest'
                 required: true
             responses:
                 "200":
@@ -204,7 +204,7 @@ components:
                     type: string
                 company_name:
                     type: string
-        ResentRegisterRequest:
+        ResendRegisterRequest:
             type: object
             properties:
                 email:

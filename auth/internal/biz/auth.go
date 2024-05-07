@@ -130,8 +130,8 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	userInfo, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			errMsg["name"] = "Account does not exist,please sign up"
-			return nil, "", kerrors.BadRequest("login error", "Account does not exist,please sign up").WithMetadata(errMsg)
+			errMsg["name"] = "Account does not exist, please sign up"
+			return nil, "", kerrors.BadRequest("login error", "Account does not exist, please sign up").WithMetadata(errMsg)
 		}
 		return nil, "", pb.ErrorInternal(err.Error())
 	}
@@ -195,20 +195,20 @@ func (au *AuthUsecase) ForgetPassword(ctx context.Context, req *pb.ForgetPasswor
 	return nil
 }
 
-func (au *AuthUsecase) ResentRegister(ctx context.Context, req *pb.ResentRegisterRequest) error {
+func (au *AuthUsecase) ResendRegister(ctx context.Context, req *pb.ResendRegisterRequest) error {
 	if _, err := mail.ParseAddress(req.Email); err != nil {
 		return err
 	}
 	userInfo, err := au.userRepo.Find(ctx, "", req.Email, req.Phone)
 	if err != nil {
 		errMsg := make(map[string]string)
-		errMsg["email"] = "Account does not exist,please sign up"
-		return kerrors.BadRequest("login error", "Resent register").WithMetadata(errMsg)
+		errMsg["email"] = "Account does not exist, please sign up"
+		return kerrors.BadRequest("login error", "Resent register error").WithMetadata(errMsg)
 		//return err
 	}
 
 	if au.hooks != nil {
-		if h, ok := au.hooks[user.ON_RESENT_REGISTER]; ok {
+		if h, ok := au.hooks[user.ON_RESEND_REGISTER]; ok {
 			if _, err = h(ctx, userInfo); err != nil {
 				return err
 			}
@@ -256,7 +256,7 @@ func (au *AuthUsecase) ResetPassword(ctx context.Context, req *pb.ResetPasswordR
 var (
 	ErrAccountDuplicate    = errors.New("account duplicate")
 	ErrRegisterIsNotPublic = errors.New("register is not public")
-	ErrAccountNotExist     = pb.ErrorInvalidParam("Account does not exist,please sign up")
+	ErrAccountNotExist     = pb.ErrorInvalidParam("Account does not exist, please sign up")
 	ErrLoginPassword       = pb.ErrorInvalidParam("Incorrect password")
 	ErrResetPasswordCode   = pb.ErrorInvalidParam("Code is error")
 	ErrResetPassword       = pb.ErrorInvalidParam("Password length should be between 6 and 12 characters.Or passwords do not match")
