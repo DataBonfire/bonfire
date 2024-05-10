@@ -141,22 +141,22 @@ var _ interface {
 	ErrorName() string
 } = ForgetPasswordRequestValidationError{}
 
-// Validate checks the field values on ResendRegisterRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ResendRegisterRequest) Validate() error {
+// Validate checks the field values on ResendOTPRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ResendOTPRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ResendRegisterRequest with the rules
+// ValidateAll checks the field values on ResendOTPRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// ResendRegisterRequestMultiError, or nil if none found.
-func (m *ResendRegisterRequest) ValidateAll() error {
+// ResendOTPRequestMultiError, or nil if none found.
+func (m *ResendOTPRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ResendRegisterRequest) validate(all bool) error {
+func (m *ResendOTPRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -168,19 +168,19 @@ func (m *ResendRegisterRequest) validate(all bool) error {
 	// no validation rules for Phone
 
 	if len(errors) > 0 {
-		return ResendRegisterRequestMultiError(errors)
+		return ResendOTPRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// ResendRegisterRequestMultiError is an error wrapping multiple validation
-// errors returned by ResendRegisterRequest.ValidateAll() if the designated
-// constraints aren't met.
-type ResendRegisterRequestMultiError []error
+// ResendOTPRequestMultiError is an error wrapping multiple validation errors
+// returned by ResendOTPRequest.ValidateAll() if the designated constraints
+// aren't met.
+type ResendOTPRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ResendRegisterRequestMultiError) Error() string {
+func (m ResendOTPRequestMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -189,11 +189,11 @@ func (m ResendRegisterRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ResendRegisterRequestMultiError) AllErrors() []error { return m }
+func (m ResendOTPRequestMultiError) AllErrors() []error { return m }
 
-// ResendRegisterRequestValidationError is the validation error returned by
-// ResendRegisterRequest.Validate if the designated constraints aren't met.
-type ResendRegisterRequestValidationError struct {
+// ResendOTPRequestValidationError is the validation error returned by
+// ResendOTPRequest.Validate if the designated constraints aren't met.
+type ResendOTPRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -201,24 +201,22 @@ type ResendRegisterRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResendRegisterRequestValidationError) Field() string { return e.field }
+func (e ResendOTPRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResendRegisterRequestValidationError) Reason() string { return e.reason }
+func (e ResendOTPRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResendRegisterRequestValidationError) Cause() error { return e.cause }
+func (e ResendOTPRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResendRegisterRequestValidationError) Key() bool { return e.key }
+func (e ResendOTPRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResendRegisterRequestValidationError) ErrorName() string {
-	return "ResendRegisterRequestValidationError"
-}
+func (e ResendOTPRequestValidationError) ErrorName() string { return "ResendOTPRequestValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ResendRegisterRequestValidationError) Error() string {
+func (e ResendOTPRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -230,14 +228,14 @@ func (e ResendRegisterRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sResendRegisterRequest.%s: %s%s",
+		"invalid %sResendOTPRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResendRegisterRequestValidationError{}
+var _ error = ResendOTPRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -245,7 +243,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResendRegisterRequestValidationError{}
+} = ResendOTPRequestValidationError{}
 
 // Validate checks the field values on ResetPasswordRequest with the rules
 // defined in the proto definition for this message. If any rules are

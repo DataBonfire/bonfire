@@ -32,8 +32,8 @@ func (s *AuthService) ForgetPassword(ctx context.Context, req *pb.ForgetPassword
 	return &pb.CommonReply{Id: "1"}, s.authUsecase.ForgetPassword(ctx, req)
 }
 
-func (s *AuthService) ResendRegister(ctx context.Context, req *pb.ResendRegisterRequest) (*pb.CommonReply, error) {
-	return &pb.CommonReply{Id: "1"}, s.authUsecase.ResendRegister(ctx, req)
+func (s *AuthService) ResendOTP(ctx context.Context, req *pb.ResendOTPRequest) (*pb.CommonReply, error) {
+	return &pb.CommonReply{}, s.authUsecase.ResendOTP(ctx, req)
 }
 
 func (s *AuthService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterReply, error) {

@@ -23,7 +23,7 @@ const (
 	Auth_Login_FullMethodName          = "/api.v1.Auth/Login"
 	Auth_ForgetPassword_FullMethodName = "/api.v1.Auth/ForgetPassword"
 	Auth_ResetPassword_FullMethodName  = "/api.v1.Auth/ResetPassword"
-	Auth_ResendRegister_FullMethodName = "/api.v1.Auth/ResendRegister"
+	Auth_ResendOTP_FullMethodName      = "/api.v1.Auth/ResendOTP"
 )
 
 // AuthClient is the client API for Auth service.
@@ -34,7 +34,7 @@ type AuthClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
 	ForgetPassword(ctx context.Context, in *ForgetPasswordRequest, opts ...grpc.CallOption) (*CommonReply, error)
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*CommonReply, error)
-	ResendRegister(ctx context.Context, in *ResendRegisterRequest, opts ...grpc.CallOption) (*CommonReply, error)
+	ResendOTP(ctx context.Context, in *ResendOTPRequest, opts ...grpc.CallOption) (*CommonReply, error)
 }
 
 type authClient struct {
@@ -81,9 +81,9 @@ func (c *authClient) ResetPassword(ctx context.Context, in *ResetPasswordRequest
 	return out, nil
 }
 
-func (c *authClient) ResendRegister(ctx context.Context, in *ResendRegisterRequest, opts ...grpc.CallOption) (*CommonReply, error) {
+func (c *authClient) ResendOTP(ctx context.Context, in *ResendOTPRequest, opts ...grpc.CallOption) (*CommonReply, error) {
 	out := new(CommonReply)
-	err := c.cc.Invoke(ctx, Auth_ResendRegister_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auth_ResendOTP_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ type AuthServer interface {
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	ForgetPassword(context.Context, *ForgetPasswordRequest) (*CommonReply, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*CommonReply, error)
-	ResendRegister(context.Context, *ResendRegisterRequest) (*CommonReply, error)
+	ResendOTP(context.Context, *ResendOTPRequest) (*CommonReply, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -118,8 +118,8 @@ func (UnimplementedAuthServer) ForgetPassword(context.Context, *ForgetPasswordRe
 func (UnimplementedAuthServer) ResetPassword(context.Context, *ResetPasswordRequest) (*CommonReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetPassword not implemented")
 }
-func (UnimplementedAuthServer) ResendRegister(context.Context, *ResendRegisterRequest) (*CommonReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResendRegister not implemented")
+func (UnimplementedAuthServer) ResendOTP(context.Context, *ResendOTPRequest) (*CommonReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResendOTP not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -206,20 +206,20 @@ func _Auth_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_ResendRegister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResendRegisterRequest)
+func _Auth_ResendOTP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResendOTPRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).ResendRegister(ctx, in)
+		return srv.(AuthServer).ResendOTP(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_ResendRegister_FullMethodName,
+		FullMethod: Auth_ResendOTP_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).ResendRegister(ctx, req.(*ResendRegisterRequest))
+		return srv.(AuthServer).ResendOTP(ctx, req.(*ResendOTPRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -248,8 +248,8 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Auth_ResetPassword_Handler,
 		},
 		{
-			MethodName: "ResendRegister",
-			Handler:    _Auth_ResendRegister_Handler,
+			MethodName: "ResendOTP",
+			Handler:    _Auth_ResendOTP_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

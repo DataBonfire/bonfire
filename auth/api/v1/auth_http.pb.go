@@ -22,14 +22,14 @@ const _ = http.SupportPackageIsVersion1
 const OperationAuthForgetPassword = "/api.v1.Auth/ForgetPassword"
 const OperationAuthLogin = "/api.v1.Auth/Login"
 const OperationAuthRegister = "/api.v1.Auth/Register"
-const OperationAuthResendRegister = "/api.v1.Auth/ResendRegister"
+const OperationAuthResendOTP = "/api.v1.Auth/ResendOTP"
 const OperationAuthResetPassword = "/api.v1.Auth/ResetPassword"
 
 type AuthHTTPServer interface {
 	ForgetPassword(context.Context, *ForgetPasswordRequest) (*CommonReply, error)
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
 	Register(context.Context, *RegisterRequest) (*RegisterReply, error)
-	ResendRegister(context.Context, *ResendRegisterRequest) (*CommonReply, error)
+	ResendOTP(context.Context, *ResendOTPRequest) (*CommonReply, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*CommonReply, error)
 }
 
@@ -39,7 +39,7 @@ func RegisterAuthHTTPServer(s *http.Server, srv AuthHTTPServer) {
 	r.POST("/auth/login", _Auth_Login0_HTTP_Handler(srv))
 	r.POST("/auth/forget_password", _Auth_ForgetPassword0_HTTP_Handler(srv))
 	r.POST("/auth/reset_password", _Auth_ResetPassword0_HTTP_Handler(srv))
-	r.POST("/auth/resend_register", _Auth_ResendRegister0_HTTP_Handler(srv))
+	r.POST("/auth/resend_otp", _Auth_ResendOTP0_HTTP_Handler(srv))
 }
 
 func _Auth_Register0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
@@ -118,15 +118,15 @@ func _Auth_ResetPassword0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context
 	}
 }
 
-func _Auth_ResendRegister0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
+func _Auth_ResendOTP0_HTTP_Handler(srv AuthHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in ResendRegisterRequest
+		var in ResendOTPRequest
 		if err := ctx.Bind(&in); err != nil {
 			return err
 		}
-		http.SetOperation(ctx, OperationAuthResendRegister)
+		http.SetOperation(ctx, OperationAuthResendOTP)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.ResendRegister(ctx, req.(*ResendRegisterRequest))
+			return srv.ResendOTP(ctx, req.(*ResendOTPRequest))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
@@ -141,7 +141,7 @@ type AuthHTTPClient interface {
 	ForgetPassword(ctx context.Context, req *ForgetPasswordRequest, opts ...http.CallOption) (rsp *CommonReply, err error)
 	Login(ctx context.Context, req *LoginRequest, opts ...http.CallOption) (rsp *LoginReply, err error)
 	Register(ctx context.Context, req *RegisterRequest, opts ...http.CallOption) (rsp *RegisterReply, err error)
-	ResendRegister(ctx context.Context, req *ResendRegisterRequest, opts ...http.CallOption) (rsp *CommonReply, err error)
+	ResendOTP(ctx context.Context, req *ResendOTPRequest, opts ...http.CallOption) (rsp *CommonReply, err error)
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest, opts ...http.CallOption) (rsp *CommonReply, err error)
 }
 
@@ -192,11 +192,11 @@ func (c *AuthHTTPClientImpl) Register(ctx context.Context, in *RegisterRequest, 
 	return &out, err
 }
 
-func (c *AuthHTTPClientImpl) ResendRegister(ctx context.Context, in *ResendRegisterRequest, opts ...http.CallOption) (*CommonReply, error) {
+func (c *AuthHTTPClientImpl) ResendOTP(ctx context.Context, in *ResendOTPRequest, opts ...http.CallOption) (*CommonReply, error) {
 	var out CommonReply
-	pattern := "/auth/resend_register"
+	pattern := "/auth/resend_otp"
 	path := binding.EncodeURL(pattern, in, false)
-	opts = append(opts, http.Operation(OperationAuthResendRegister))
+	opts = append(opts, http.Operation(OperationAuthResendOTP))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {

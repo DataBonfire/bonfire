@@ -34,9 +34,9 @@ service Auth {
       body: "*",
     };
   };
-  rpc ResendRegister (ResendRegisterRequest) returns (CommonReply) {
+  rpc ResendOTP (ResendOTPRequest) returns (CommonReply) {
     option (google.api.http) = {
-      post: "/auth/resend_register",
+      post: "/auth/resend_otp",
       body: "*",
     };
   };
@@ -47,7 +47,7 @@ message ForgetPasswordRequest {
   string phone = 2;
 }
 
-message ResendRegisterRequest {
+message ResendOTPRequest {
   string email = 1;
   string phone = 2;
 }

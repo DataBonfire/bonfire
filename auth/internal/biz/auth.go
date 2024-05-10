@@ -58,7 +58,7 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 	}
 
 	if len(errMsg) != 0 {
-		return kerrors.BadRequest("register error", "").WithMetadata(errMsg)
+		return kerrors.BadRequest(ReasonInvalidParam, "").WithMetadata(errMsg)
 	}
 
 	_u, err := au.userRepo.Find(ctx, req.Name, req.Email, req.Phone)
@@ -79,7 +79,12 @@ func (au *AuthUsecase) Register(ctx context.Context, req *pb.RegisterRequest) er
 			errMsg["email"] = "This email has already been registered"
 		}
 
-		return kerrors.BadRequest("account duplicate", "").WithMetadata(errMsg)
+		return kerrors.BadRequest(ReasonInvalidParam, "").WithMetadata(errMsg)
+		//if _u.EmailVerified {
+		//	return kerrors.BadRequest(ReasonInvalidParam, "").WithMetadata(errMsg)
+		//} else {
+		//	return kerrors.BadRequest(ReasonNeedVerify, "").WithMetadata(errMsg)
+		//}
 	}
 
 	userInfo := &user.User{
@@ -131,7 +136,7 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			errMsg["name"] = "Account does not exist, please sign up"
-			return nil, "", kerrors.BadRequest("login error", "Account does not exist, please sign up").WithMetadata(errMsg)
+			return nil, "", kerrors.BadRequest(ReasonInvalidParam, "Account does not exist, please sign up").WithMetadata(errMsg)
 		}
 		return nil, "", pb.ErrorInternal(err.Error())
 	}
@@ -139,13 +144,13 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	passwordHashed := utils.HashPassword(req.Password, au.conf.PasswordSalt)
 	if userInfo.PasswordHashed != passwordHashed {
 		errMsg["password"] = "Incorrect password"
-		return nil, "", kerrors.BadRequest("login error", "Incorrect password").WithMetadata(errMsg)
+		return nil, "", kerrors.BadRequest(ReasonInvalidParam, "Incorrect password").WithMetadata(errMsg)
 	}
 
 	if au.hooks != nil {
 		if h, ok := au.hooks[user.ON_LOGIN_EMAIL_VERIFY]; ok {
 			if !userInfo.EmailVerified {
-				return nil, "", ErrEmailNeedVerified
+				return nil, "", kerrors.BadRequest(ReasonNeedVerify, "").WithMetadata(errMsg)
 			}
 			if h != nil {
 				if _, err = h(ctx, userInfo); err != nil {
@@ -195,7 +200,7 @@ func (au *AuthUsecase) ForgetPassword(ctx context.Context, req *pb.ForgetPasswor
 	return nil
 }
 
-func (au *AuthUsecase) ResendRegister(ctx context.Context, req *pb.ResendRegisterRequest) error {
+func (au *AuthUsecase) ResendOTP(ctx context.Context, req *pb.ResendOTPRequest) error {
 	if _, err := mail.ParseAddress(req.Email); err != nil {
 		return err
 	}
@@ -203,12 +208,12 @@ func (au *AuthUsecase) ResendRegister(ctx context.Context, req *pb.ResendRegiste
 	if err != nil {
 		errMsg := make(map[string]string)
 		errMsg["email"] = "Account does not exist, please sign up"
-		return kerrors.BadRequest("login error", "Resent register error").WithMetadata(errMsg)
+		return kerrors.BadRequest(ReasonInvalidParam, "Resent register error").WithMetadata(errMsg)
 		//return err
 	}
 
 	if au.hooks != nil {
-		if h, ok := au.hooks[user.ON_RESEND_REGISTER]; ok {
+		if h, ok := au.hooks[user.ON_RESEND_OTP]; ok {
 			if _, err = h(ctx, userInfo); err != nil {
 				return err
 			}
@@ -272,4 +277,14 @@ var (
 	ErrExternal       = pb.ErrorExternal("external err")
 	ErrInternal       = pb.ErrorInternal("internal err")
 	ErrParam          = pb.ErrorInvalidParam("external err")
+)
+
+const (
+	ReasonInvalidParam     = "INVALID_PARAM"
+	ReasonNeedLogin        = "NEED_LOGIN"
+	ReasonPaymentRequired  = "PAYMENT_REQUIRED"
+	ReasonForbiddenRequest = "FORBIDDEN_REQUEST"
+	ReasonInternal         = "INTERNAL"
+	ReasonExternal         = "EXTERNAL"
+	ReasonNeedVerify       = "NEED_VERIFY"
 )

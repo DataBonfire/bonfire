@@ -15,5 +15,5 @@ const (
 
 	ON_FORGET_PASSWORD = "on_forget_password"
 	ON_RESET_PASSWORD  = "on_reset_password"
-	ON_RESEND_REGISTER = "on_resend_register"
+	ON_RESEND_OTP      = "on_resend_otp"
 )
