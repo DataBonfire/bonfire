@@ -25,6 +25,10 @@ func TestHashPassword(t *testing.T) {
 		{name: "testcase-06", args: args{s: "2kshn4ksd5", salt: "kolplanet"}, want: "4cb07e62f6112f8ba7dc17e3dc68662ed221afa9"},
 		{name: "testcase-07", args: args{s: "sjsnk1n4ksd5", salt: "kolplanet"}, want: "63ae37347ad40b7c00eef1f2e426bdf815ba510d"},
 		{name: "testcase-08", args: args{s: "12345678", salt: "kolplanet"}, want: "b35b5bf5465f69c72a193df44d8536a9eb0ed3f5"},
+		{name: "testcase-09", args: args{s: "ba39964dcbf5ce", salt: "kolplanet"}, want: "30a9b5909895cde496b577f569953ce352d91c4b"},
+		{name: "testcase-10", args: args{s: "aa964dcbf5ce", salt: "kolplanet"}, want: "eff52ec8a10289d442de5ddce119c7137e8d6826"},
+		{name: "testcase-11", args: args{s: "1124dcbf5ce", salt: "kolplanet"}, want: "8b18133029f7a72187cc5173eb3b143a7d70223f"},
+		{name: "testcase-12", args: args{s: "jdh#4df51ah", salt: "kolplanet"}, want: "eb12d53315e49f709efb73d045c1ff1b7e7cd960"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

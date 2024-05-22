@@ -84,7 +84,7 @@ func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		}
 		if u.ID > 0 {
 			ignore := false
-			for _, v := range []string{"sts_tokens", "global_unread_messages"} {
+			for _, v := range []string{"sts_tokens", "global_unread_messages", "influencer_comparisons", "influencer_collections"} {
 				if strings.Contains(path, v) {
 					ignore = true
 					break
@@ -92,7 +92,8 @@ func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			}
 			if !ignore {
 				if errCreate := db.Create(_userLog).Error; errCreate != nil {
-					return errCreate
+					println(errCreate.Error())
+					return nil
 				}
 			}
 		}

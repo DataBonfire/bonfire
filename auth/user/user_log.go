@@ -18,7 +18,7 @@ type UserLog struct {
 	// 客户端的UserAgent
 	UA string `json:"ua"`
 	// 发起请求的客户端的IP
-	IP string `json:"ip" gorm:"type:varchar(20)"`
+	IP string `json:"ip"`
 	// 请求协议
 	Protocol string `json:"protocol" gorm:"type:varchar(40)" `
 	// 请求URI
