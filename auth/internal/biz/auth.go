@@ -3,15 +3,14 @@ package biz
 import (
 	"context"
 	"errors"
-	"net/mail"
-
-	kerrors "github.com/go-kratos/kratos/v2/errors"
-	"gorm.io/gorm"
-
 	pb "github.com/databonfire/bonfire/auth/api/v1"
 	"github.com/databonfire/bonfire/auth/internal/conf"
 	"github.com/databonfire/bonfire/auth/internal/utils"
 	"github.com/databonfire/bonfire/auth/user"
+	kerrors "github.com/go-kratos/kratos/v2/errors"
+	"gorm.io/gorm"
+	"net/mail"
+	"time"
 )
 
 type AuthUsecase struct {
@@ -145,6 +144,9 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 	if userInfo.PasswordHashed != passwordHashed {
 		errMsg["password"] = "Incorrect password"
 		return nil, "", kerrors.BadRequest(ReasonInvalidParam, "Incorrect password").WithMetadata(errMsg)
+	}
+	if userInfo.ExpiredAt <= time.Now().Unix() {
+		return nil, "", kerrors.BadRequest(ReasonPaymentRequired, "You account is expired,please email service@kolplanet.com to renew your package").WithMetadata(errMsg)
 	}
 
 	if au.hooks != nil {

@@ -66,6 +66,10 @@ func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		if err = db.First(&u, userSession.UserId).Error; err != nil {
 			return err
 		}
+		if u.ExpiredAt <= time.Now().Unix() {
+			return ErrNeedLogin
+		}
+
 		if m.subordinatesFinder != nil {
 			u.Subordinates, err = m.subordinatesFinder(ctx, &u)
 		} else {
