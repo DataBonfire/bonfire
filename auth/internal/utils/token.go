@@ -14,7 +14,8 @@ var (
 )
 
 type UserSession struct {
-	UserId uint `json:"user_id"`
+	UserId        uint  `json:"user_id"`
+	TokenIssuedAt int64 `json:"token_issued_at"`
 }
 
 func GenToken(us *UserSession, jwtKey string) (string, error) {
@@ -22,9 +23,9 @@ func GenToken(us *UserSession, jwtKey string) (string, error) {
 		Issuer:    issuer,
 		Subject:   strconv.FormatUint(uint64(us.UserId), 10),
 		Audience:  jwt.ClaimStrings{},
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 180)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
 		NotBefore: nil,
-		IssuedAt:  nil,
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		ID:        "",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, j)
@@ -57,6 +58,13 @@ func ParseToken(tokenString, jwtKey string) (*UserSession, error) {
 	if err != nil {
 		return nil, err
 	}
+	if mc.IssuedAt == nil {
+		return nil, errors.New("invalid token")
+	}
+	issueAt := mc.IssuedAt.Unix()
 
-	return &UserSession{UserId: uint(userId)}, nil
+	return &UserSession{
+		UserId:        uint(userId),
+		TokenIssuedAt: issueAt,
+	}, nil
 }

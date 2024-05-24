@@ -24,7 +24,8 @@ type User struct {
 
 	Subordinates []uint `gorm:"-"`
 
-	ExpiredAt int64 `json:"expired_at" gorm:"expired_at"`
+	ExpiredAt       int64 `json:"expired_at" gorm:"expired_at"`
+	SecureUpdatedAt int64 `json:"secure_updated_at" gorm:"secure_updated_at"`
 }
 
 func (u *User) GetID() uint {

@@ -69,6 +69,11 @@ func (m *authMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		if u.ExpiredAt <= time.Now().Unix() {
 			return ErrNeedLogin
 		}
+		if u.SecureUpdatedAt > 0 {
+			if userSession.TokenIssuedAt <= u.SecureUpdatedAt {
+				return ErrNeedLogin
+			}
+		}
 
 		if m.subordinatesFinder != nil {
 			u.Subordinates, err = m.subordinatesFinder(ctx, &u)
