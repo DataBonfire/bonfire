@@ -146,7 +146,8 @@ func (au *AuthUsecase) Login(ctx context.Context, req *pb.LoginRequest) (*user.U
 		return nil, "", kerrors.BadRequest(ReasonInvalidParam, "Incorrect password").WithMetadata(errMsg)
 	}
 	if userInfo.ExpiredAt <= time.Now().Unix() {
-		return nil, "", kerrors.BadRequest(ReasonPaymentRequired, "You account is expired,please email service@kolplanet.com to renew your package").WithMetadata(errMsg)
+		//return nil, "", kerrors.BadRequest(ReasonPaymentRequired, "You account is expired,please email service@kolplanet.com to renew your package").WithMetadata(errMsg)
+		return nil, "", kerrors.BadRequest(ReasonPaymentRequired, "KOLPlanet team will contact you soon.").WithMetadata(errMsg)
 	}
 
 	if au.hooks != nil {
